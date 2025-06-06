@@ -1,0 +1,147 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0b114860d812fd0499b9963ae172778d, type: 3}
+  m_Name: Default
+  m_EditorClassIdentifier: 
+  letters:
+  - name: A
+    baseValue: 1
+    baseMat: {fileID: 2100000, guid: 4bbb357cc0b525e40a90d1111ae6af33, type: 2}
+  - name: B
+    baseValue: 3
+    baseMat: {fileID: 2100000, guid: b7902615f50eefa4098c92b46dc2036d, type: 2}
+  - name: C
+    baseValue: 3
+    baseMat: {fileID: 2100000, guid: c0831d18de5b38e4c946c03d573dceb4, type: 2}
+  - name: D
+    baseValue: 2
+    baseMat: {fileID: 2100000, guid: ddbbd9284eca86b4cb3886be70715d87, type: 2}
+  - name: E
+    baseValue: 1
+    baseMat: {fileID: 2100000, guid: e6637ab89d2396a48bb814ee90f3ad04, type: 2}
+  - name: F
+    baseValue: 4
+    baseMat: {fileID: 2100000, guid: d1b595f518c8c56429264cc1940400a5, type: 2}
+  - name: G
+    baseValue: 2
+    baseMat: {fileID: 2100000, guid: b30b3e0e1afb1004c8f557d048412bd7, type: 2}
+  - name: H
+    baseValue: 4
+    baseMat: {fileID: 2100000, guid: 577bf591dd543d64ca0e30186a0b4616, type: 2}
+  - name: I
+    baseValue: 1
+    baseMat: {fileID: 2100000, guid: 5bb974dccac5a40408410e8bbd87fe89, type: 2}
+  - name: J
+    baseValue: 8
+    baseMat: {fileID: 2100000, guid: 3aa3e8ade1ab265449a4a29c33d97bb1, type: 2}
+  - name: K
+    baseValue: 5
+    baseMat: {fileID: 2100000, guid: be7b22184072159469ab16a0fae7c399, type: 2}
+  - name: L
+    baseValue: 1
+    baseMat: {fileID: 2100000, guid: 0a8bf35a3aaef444c92aded828680aa0, type: 2}
+  - name: M
+    baseValue: 3
+    baseMat: {fileID: 2100000, guid: 3598afda3f0107b448f7c9950f1f2695, type: 2}
+  - name: N
+    baseValue: 1
+    baseMat: {fileID: 2100000, guid: 5fca54a1e30fcc7488f3f62abeb9e413, type: 2}
+  - name: O
+    baseValue: 1
+    baseMat: {fileID: 2100000, guid: e1dbad49bd8f33a4fbcc3467c9350398, type: 2}
+  - name: P
+    baseValue: 3
+    baseMat: {fileID: 2100000, guid: e36af35d82cda0f4598bda6164deef79, type: 2}
+  - name: Q
+    baseValue: 10
+    baseMat: {fileID: 2100000, guid: da0d8c6c59527b841ace46eb6042e667, type: 2}
+  - name: R
+    baseValue: 1
+    baseMat: {fileID: 2100000, guid: 753eb3a7004533841b95ef84f366c651, type: 2}
+  - name: S
+    baseValue: 1
+    baseMat: {fileID: 2100000, guid: 876a2f5a1a61bd443b1ad671c189ed02, type: 2}
+  - name: T
+    baseValue: 1
+    baseMat: {fileID: 2100000, guid: e8dff7c66da32b147a1d6785f1451f93, type: 2}
+  - name: U
+    baseValue: 1
+    baseMat: {fileID: 2100000, guid: 511e59f2e7cc71c4a9f78a8ab90daa48, type: 2}
+  - name: V
+    baseValue: 4
+    baseMat: {fileID: 2100000, guid: f62c476084edd0d4680e50f46792b0fe, type: 2}
+  - name: W
+    baseValue: 4
+    baseMat: {fileID: 2100000, guid: aa3235ffe3a1a404e99efc8bff68a8d0, type: 2}
+  - name: X
+    baseValue: 8
+    baseMat: {fileID: 2100000, guid: 4a7e607aa614b794c8147a5fe3d4358c, type: 2}
+  - name: Y
+    baseValue: 4
+    baseMat: {fileID: 2100000, guid: 89973210265a53b4d8475ddc12c55d1c, type: 2}
+  - name: Z
+    baseValue: 10
+    baseMat: {fileID: 2100000, guid: c447ee99b640a454c9c065e6b8450559, type: 2}
+  startingBag:
+  - letterIndex: 0
+    count: 13
+  - letterIndex: 1
+    count: 3
+  - letterIndex: 2
+    count: 3
+  - letterIndex: 3
+    count: 6
+  - letterIndex: 4
+    count: 18
+  - letterIndex: 5
+    count: 3
+  - letterIndex: 6
+    count: 4
+  - letterIndex: 7
+    count: 3
+  - letterIndex: 8
+    count: 12
+  - letterIndex: 9
+    count: 2
+  - letterIndex: 10
+    count: 2
+  - letterIndex: 11
+    count: 5
+  - letterIndex: 12
+    count: 3
+  - letterIndex: 13
+    count: 8
+  - letterIndex: 14
+    count: 11
+  - letterIndex: 15
+    count: 3
+  - letterIndex: 16
+    count: 2
+  - letterIndex: 17
+    count: 9
+  - letterIndex: 18
+    count: 6
+  - letterIndex: 19
+    count: 9
+  - letterIndex: 20
+    count: 6
+  - letterIndex: 21
+    count: 3
+  - letterIndex: 22
+    count: 3
+  - letterIndex: 23
+    count: 2
+  - letterIndex: 24
+    count: 3
+  - letterIndex: 25
+    count: 2
+  tilePrefab: {fileID: 2727955367877423791, guid: 6f612ed86ac799647840f3c33b9f4547, type: 3}
