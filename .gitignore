@@ -72,3 +72,5 @@ crashlytics-build.properties
 /[Aa]ssets/[Ss]treamingAssets/aa/*
 /Assets/Plugins
 /Assets/iPoly3D
+/.idea
+/Assets/Vendor

@@ -10,6 +10,7 @@ public class GameRules : ScriptableObject
     public List<LetterData> letters;
     public List<BagLetterEntry> startingBag;
     public GameObject tilePrefab;
+    public GameObject handTilePrefab;
 
     public IEnumerable<ValueDropdownItem<int>> GetLetterIndexOptions()
     {
