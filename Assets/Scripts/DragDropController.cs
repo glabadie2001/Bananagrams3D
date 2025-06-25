@@ -43,8 +43,8 @@ public class DragDropController : MonoBehaviour
     {
         if (inputManager != null)
         {
-            inputManager.OnClickStarted += OnClickStarted;
-            inputManager.OnClickCanceled += OnClickCanceled;
+            inputManager.OnClickStarted += StartDrag;
+            inputManager.OnClickCanceled += EndDrag;
         }
     }
 
@@ -52,8 +52,8 @@ public class DragDropController : MonoBehaviour
     {
         if (inputManager != null)
         {
-            inputManager.OnClickStarted -= OnClickStarted;
-            inputManager.OnClickCanceled -= OnClickCanceled;
+            inputManager.OnClickStarted -= StartDrag;
+            inputManager.OnClickCanceled -= EndDrag;
         }
     }
 
@@ -65,7 +65,7 @@ public class DragDropController : MonoBehaviour
         }
     }
 
-    private void OnClickStarted()
+    private void StartDrag()
     {
         if (!isDragging && inputManager != null)
         {
@@ -95,12 +95,64 @@ public class DragDropController : MonoBehaviour
         }
     }
 
-    private void OnClickCanceled()
+    private void EndDrag()
     {
-        if (isDragging)
+        if (!isDragging || currentDragObject == null || inputManager == null) return;
+        
+        // Get cursor world position at board level
+        Ray ray = inputManager.GetCameraRay(playerCamera);
+        Plane boardPlane = new Plane(Vector3.up, Vector3.zero);
+        
+        if (!boardPlane.Raycast(ray, out float distance))
         {
-            EndDrag();
+            ReturnToOriginal();
+            ClearDragState();
+            return;
         }
+        
+        Vector3 cursorWorldPos = ray.GetPoint(distance);
+        Debug.Log($"Cursor world position: {cursorWorldPos}");
+        
+        var gameManager = GameManager.inst;
+        
+        // Check if cursor is within board bounds
+        if (gameManager?.board != null)
+        {
+            var boardPlaneGenerator = gameManager.board.GetComponent<BoardPlaneGenerator>();
+            if (boardPlaneGenerator != null)
+            {
+                Rect boardRect = boardPlaneGenerator.GetBoardRect();
+                
+                if (cursorWorldPos.x >= boardRect.x && cursorWorldPos.x <= boardRect.x + boardRect.width &&
+                    cursorWorldPos.z >= boardRect.y && cursorWorldPos.z <= boardRect.y + boardRect.height)
+                {
+                    // Within board bounds - try to place on board
+                    if (TryPlaceOnBoard(cursorWorldPos))
+                    {
+                        Debug.Log("Successfully placed on board");
+                        ClearDragState();
+                        return;
+                    }
+                }
+            }
+        }
+        
+        // Check if cursor is within hand bounds
+        if (HandManager.inst != null && HandManager.inst.IsWithinHandBounds(cursorWorldPos))
+        {
+            // Within hand bounds - return to hand
+            if (TryReturnToHand(cursorWorldPos))
+            {
+                Debug.Log("Successfully returned to hand");
+                ClearDragState();
+                return;
+            }
+        }
+        
+        // Not in board bounds or hand bounds - return to original position
+        Debug.Log("Drop outside valid areas - returning to original");
+        ReturnToOriginal();
+        ClearDragState();
     }
 
     private void StartDrag(Tile tile, Vector3 hitPoint)
@@ -194,76 +246,6 @@ public class DragDropController : MonoBehaviour
         return new Vector3(cursorWorldPos.x, GameConstants.Grid.DRAG_HEIGHT, cursorWorldPos.z);
     }
     
-    private bool WouldPlaceOnBoard(Vector3 boardPosition)
-    {
-        var gameManager = GameManager.inst;
-        if (gameManager?.board == null || currentDragTile == null) return false;
-        
-        // This is a preview check - we don't actually place the tile
-        // Just check if the position would be valid
-        return gameManager.board != null; // Simplified check for now
-    }
-
-    private void EndDrag()
-    {
-        if (currentDragObject == null || inputManager == null) return;
-        
-        // Get cursor world position at board level
-        Ray ray = inputManager.GetCameraRay(playerCamera);
-        Plane boardPlane = new Plane(Vector3.up, Vector3.zero);
-        
-        if (!boardPlane.Raycast(ray, out float distance))
-        {
-            ReturnToOriginal();
-            ClearDragState();
-            return;
-        }
-        
-        Vector3 cursorWorldPos = ray.GetPoint(distance);
-        Debug.Log($"Cursor world position: {cursorWorldPos}");
-        
-        var gameManager = GameManager.inst;
-        
-        // Check if cursor is within board bounds
-        if (gameManager?.board != null)
-        {
-            var boardPlaneGenerator = gameManager.board.GetComponent<BoardPlaneGenerator>();
-            if (boardPlaneGenerator != null)
-            {
-                Rect boardRect = boardPlaneGenerator.GetBoardRect();
-                
-                if (cursorWorldPos.x >= boardRect.x && cursorWorldPos.x <= boardRect.x + boardRect.width &&
-                    cursorWorldPos.z >= boardRect.y && cursorWorldPos.z <= boardRect.y + boardRect.height)
-                {
-                    // Within board bounds - try to place on board
-                    if (TryPlaceOnBoard(cursorWorldPos))
-                    {
-                        Debug.Log("Successfully placed on board");
-                        ClearDragState();
-                        return;
-                    }
-                }
-            }
-        }
-        
-        // Check if cursor is within hand bounds
-        if (HandManager.inst != null && HandManager.inst.IsWithinHandBounds(cursorWorldPos))
-        {
-            // Within hand bounds - return to hand
-            if (TryReturnToHand(cursorWorldPos))
-            {
-                Debug.Log("Successfully returned to hand");
-                ClearDragState();
-                return;
-            }
-        }
-        
-        // Not in board bounds or hand bounds - return to original position
-        Debug.Log("Drop outside valid areas - returning to original");
-        ReturnToOriginal();
-        ClearDragState();
-    }
-    
     private bool TryPlaceOnBoard(Vector3 cursorWorldPos)
     {
         var gameManager = GameManager.inst;
@@ -329,22 +311,10 @@ public class DragDropController : MonoBehaviour
         }
     }
     
-    
     private void ClearDragState()
     {
         currentDragTile = null;
         currentDragObject = null;
         isDragging = false;
-    }
-
-
-    public void SetDraggableLayerMask(LayerMask mask)
-    {
-        draggableLayerMask = mask;
-    }
-
-    public void SetBoardLayerMask(LayerMask mask)
-    {
-        boardLayerMask = mask;
     }
 }

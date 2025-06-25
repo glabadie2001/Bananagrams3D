@@ -3,45 +3,14 @@ using Sirenix.Serialization;
 using Sirenix.Utilities;
 using Sirenix.Utilities.Editor;
 using System;
+using System.Collections.Generic;
 
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
 using UnityEngine;
 
-/// <summary>
-/// Represents the logical state of the game board.
-/// Separate from visual representation for better testability.
-/// </summary>
-[System.Serializable]
-public class BoardState
-{
-    [OdinSerialize, TableMatrix(HorizontalTitle = "Game Board", SquareCells = true)]
-    public LetterData[,] tiles;
 
-    public BoardState(int width, int height)
-    {
-        tiles = new LetterData[width, height];
-        for (int i = 0; i < width; i++)
-        {
-            for (int j = 0; j < height; j++)
-            {
-                tiles[i, j] = new LetterData(string.Empty, 0, null);
-            }
-        }
-    }
-
-    public void Clear()
-    {
-        for (int i = 0; i < tiles.GetLength(0); i++)
-        {
-            for (int j = 0; j < tiles.GetLength(1); j++)
-            {
-                tiles[i, j] = new LetterData(string.Empty, 0, null);
-            }
-        }
-    }
-}
 
 /// <summary>
 /// Manages the game board state and coordinates with visual representation.
@@ -197,6 +166,57 @@ public class Board : SerializedMonoBehaviour
         return false;
     }
 
+    List<WordData> ScanForWords()
+    {
+        List<WordData> words = new List<WordData>();
+        
+        List<LetterData> currWord = new List<LetterData>();
+        
+        //Scan rights
+        for (int x = 0; x < this.width; x++)
+        {
+            for (int y = 0; y < this.height; y++)
+            {
+                if (state.tiles[x, y].name != string.Empty)
+                    currWord.Add(state.tiles[x, y]);
+                else if (currWord.Count > 0)
+                {
+                    //Add word on blank
+                    words.Add(new WordData(currWord));
+                    currWord.Clear();
+                }
+            }
+
+            if (currWord.Count == 0) continue;
+            // Add word at end of row (if we have one) ((literal edge case))
+            words.Add(new WordData(currWord));
+            currWord.Clear();
+        }
+        
+        //Scan downs
+        for (int y = 0; y < this.height; y++)
+        {
+            for (int x = 0; x < this.width; x++)
+            {
+                if (state.tiles[x, y].name != string.Empty)
+                    currWord.Add(state.tiles[x, y]);
+                else if (currWord.Count > 0)
+                {
+                    //Add word on blank
+                    words.Add(new WordData(currWord));
+                    currWord.Clear();
+                }
+            }
+
+            if (currWord.Count == 0) continue;
+            // Add word at end of row (if we have one) ((literal edge case))
+            words.Add(new WordData(currWord));
+            currWord.Clear();
+        }
+        
+        return words;
+    }
+    
     public float Score()
     {
         return 0;
@@ -208,4 +228,3 @@ public class Board : SerializedMonoBehaviour
         Draw();
     }
 }
-

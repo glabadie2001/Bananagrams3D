@@ -1,6 +1,7 @@
 using Sirenix.OdinInspector;
 using Sirenix.OdinInspector.Editor;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
@@ -51,6 +52,33 @@ public struct LetterData
         name = _text;
         baseValue = _baseValue;
         baseMat = _baseMat;
+    }
+
+    public float Score()
+    {
+        return baseValue;
+    }
+}
+
+public struct WordData
+{
+    public LetterData[] chars;
+
+    // TODO: This might be the slowest shit ever, and probably unnecessary. Eat the overhead of a List if it becomes an issue
+    public WordData(IEnumerable<LetterData> _chars)
+    {
+        chars = _chars.ToArray();
+    }
+
+    public float Score()
+    {
+        float total = 0;
+        foreach (LetterData c in chars)
+        {
+            total += c.Score();
+        }
+
+        return total;
     }
 }
 
