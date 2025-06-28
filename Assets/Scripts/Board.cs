@@ -19,7 +19,6 @@ using UnityEngine;
 /// </summary>
 public class Board : SerializedMonoBehaviour
 {
-    //[SerializeField, InlineProperty, HideLabel]
     [NonSerialized, OdinSerialize]
     public BoardState state;
 
@@ -166,6 +165,7 @@ public class Board : SerializedMonoBehaviour
         return false;
     }
 
+    [Button("Get Words")]
     List<WordData> ScanForWords()
     {
         List<WordData> words = new List<WordData>();
@@ -216,10 +216,21 @@ public class Board : SerializedMonoBehaviour
         
         return words;
     }
-    
+
+    [Button("Score")]
     public float Score()
     {
-        return 0;
+        float total = 0f;
+        List<WordData> words = ScanForWords();
+
+        foreach (WordData word in words)
+        {
+            total += word.Score();
+        }
+
+        Debug.Log(total);
+
+        return total;
     }
 
     void Clear()
