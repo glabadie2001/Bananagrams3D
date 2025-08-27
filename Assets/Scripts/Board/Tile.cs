@@ -20,9 +20,6 @@ public class Tile : MonoBehaviour
     [Header("Tile Data")]
     [SerializeField] private LetterData letterData;
     
-    [Header("Visual Settings")]
-    [SerializeField] private Camera playerCamera;
-    
     // Cached components for performance
     private Vector3 originalPosition;
     private bool isHovering = false;
@@ -51,9 +48,6 @@ public class Tile : MonoBehaviour
         rb = GetComponent<Rigidbody>();
         col = GetComponent<Collider>();
         meshRenderer = GetComponent<MeshRenderer>();
-        
-        if (playerCamera == null)
-            playerCamera = Camera.main;
     }
 
     private void Start()
@@ -62,14 +56,12 @@ public class Tile : MonoBehaviour
     }
 
     /// <summary>
-    /// Initialize tile with letter data and optional camera reference.
+    /// Initialize tile with letter data
     /// Call after instantiation to set up tile state.
     /// </summary>
-    public void Initialize(LetterData letter, Camera camera = null)
+    public void Initialize(LetterData letter)
     {
         letterData = letter;
-        if (camera != null)
-            playerCamera = camera;
             
         // Apply visual representation
         if (meshRenderer && letter.baseMat != null)

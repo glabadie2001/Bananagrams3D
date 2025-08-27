@@ -22,16 +22,15 @@ public class GameManager : MonoBehaviour
     [Header("Game State")]
     [SerializeField] private Bag<LetterData> reserve;
     [SerializeField] private List<LetterData> discard;
-    [SerializeField] private List<LetterData> hand;
+    [SerializeField] public GameZone<LetterData> hand;
     
     /// <summary>
-    /// Maximum tiles allowed in hand. Consider moving to GameConfig.
+    /// Maximum tiles allowed in hand. Consider moving to GameConfig or GameZone?
     /// </summary>
     public int handSize = 21;
 
     void Awake()
     {
-        // Singleton pattern - consider using dependency injection for better testability
         if (inst == null)
             inst = this;
         else if (inst != this)
@@ -50,7 +49,7 @@ public class GameManager : MonoBehaviour
     {
         InitializeGame();
     }
-    
+
     /// <summary>
     /// Sets up the initial game state and systems.
     /// </summary>
@@ -65,10 +64,8 @@ public class GameManager : MonoBehaviour
         // Initialize game systems
         board.Initialize(rules);
         
-        if (HandManager.inst != null)
-        {
-            HandManager.inst.Initialize(rules.handTilePrefab ?? rules.tilePrefab);
-        }
+        // Initialize hand renderer if not set
+        hand.Renderer.Initialize(hand.container);
         
         // Draw initial hand
         DrawHand();
@@ -79,23 +76,16 @@ public class GameManager : MonoBehaviour
     /// Updates both data state and visual representation.
     /// </summary>
     [Button("Draw Hand")]
-    void DrawHand()
+    public void DrawHand()
     {
         // Draw letters from bag to fill hand up to handSize
         while (hand.Count < handSize && reserve.Count > 0)
         {
             var letter = reserve.Pull();
             hand.Add(letter);
-            
-            // Add to visual hand immediately
-            if (HandManager.inst != null)
-                HandManager.inst.AddLetterToHand(letter);
         }
-        
-        if (reserve.Count == 0 && hand.Count < handSize)
-        {
-            Debug.LogWarning("No more letters in reserve to draw from.");
-        }
+
+        hand.Renderer.Render(hand);
     }
 
     [Button("Discard Hand")]
@@ -107,8 +97,10 @@ public class GameManager : MonoBehaviour
             hand.RemoveAt(0);
         }
         
-        if (HandManager.inst != null)
-            HandManager.inst.ClearHand();
+        if (hand.Renderer is HandRenderer handRenderer)
+            handRenderer.ClearHand();
+        else
+            hand.Clear();
     }
     
     /// <summary>
@@ -128,13 +120,7 @@ public class GameManager : MonoBehaviour
             {
                 hand.Remove(tile.Letter);
                 
-                // Remove from hand manager's tracking
-                if (HandManager.inst != null)
-                {
-                    HandManager.inst.handTiles.Remove(tile);
-                    HandManager.inst.handLetters.Remove(tile.Letter);
-                    HandManager.inst.RepositionHandTiles();
-                }
+                hand.Renderer.Render(hand);
             }
             
             return true;
@@ -165,21 +151,14 @@ public class GameManager : MonoBehaviour
         // Add the tile back to hand when dragged to hand area
         hand.Add(tile.Letter);
         
-        if (HandManager.inst != null)
-        {
-            HandManager.inst.handTiles.Add(tile);
-            HandManager.inst.handLetters.Add(tile.Letter);
-            
-            // Calculate new hand position
-            Vector3 handPosition = HandManager.inst.CalculateHandPosition(HandManager.inst.handTiles.Count - 1);
-            tile.SetOriginalPosition(handPosition);
-            tile.transform.position = handPosition;
-            tile.transform.SetParent(HandManager.inst.transform);
-            
-            HandManager.inst.RepositionHandTiles();
-        }
+        hand.Renderer.Render(hand);
         
         // Update tile location
         tile.SetLocation(TileLocation.Hand);
+    }
+
+    private void OnDrawGizmos()
+    {
+        hand.Renderer.OnDrawGizmos();
     }
 }

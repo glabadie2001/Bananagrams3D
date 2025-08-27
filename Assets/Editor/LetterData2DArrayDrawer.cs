@@ -5,7 +5,7 @@ using UnityEngine;
 
 public class LetterData2DArrayDrawer : OdinAttributeDrawer<TableMatrixAttribute, LetterData[,]>
 {
-    private const float CELL_SIZE = 20f;
+    private const float CELL_SIZE = 30f;
     private const float CELL_SPACING = 2f;
 
     protected override void DrawPropertyLayout(GUIContent label)
@@ -55,38 +55,29 @@ public class LetterData2DArrayDrawer : OdinAttributeDrawer<TableMatrixAttribute,
 
     private void DrawLetterCell(Rect rect, LetterData letter, int x, int y)
     {
-        Color bgColor = GetCellBGColor(letter);
+        Color bgColor = GetCellBgColor(letter);
         EditorGUI.DrawRect(rect, bgColor);
 
         Handles.color = Color.black;
 
         Handles.DrawSolidRectangleWithOutline(rect, Color.clear, Color.black);
 
-        GUIStyle textStyle = new GUIStyle(GUI.skin.label)
-        {
-            alignment = TextAnchor.MiddleCenter,
-            fontSize = 16,
-            fontStyle = FontStyle.Bold,
-            normal = { textColor = GetTextColor(letter) }
-        };
-
         string displayText = string.IsNullOrEmpty(letter.name) ? "" : letter.name;
-
-        Rect letterRect = new Rect(rect.x, rect.y, rect.width, rect.height * 0.7f);
-        Rect valueRect = new Rect(rect.x, rect.y + rect.height * 0.7f, rect.width, rect.height * 0.3f);
-
-        EditorGUI.LabelField(letterRect, displayText, textStyle);
-
-        if (letter.baseValue > 0)
+        
+        if (!string.IsNullOrEmpty(displayText))
         {
-            GUIStyle valueStyle = new GUIStyle(GUI.skin.label)
+            // Use a more conservative font size that fits well
+            int fontSize = displayText.Length == 1 ? 12 : 10;
+            
+            GUIStyle textStyle = new GUIStyle(EditorStyles.boldLabel)
             {
                 alignment = TextAnchor.MiddleCenter,
-                fontSize = 10,
-                normal = { textColor = Color.grey }
+                fontSize = fontSize,
+                normal = { textColor = GetTextColor(letter) }
             };
 
-            EditorGUI.LabelField(valueRect, letter.baseValue.ToString(), valueStyle);
+            // Use the full cell rect for proper centering
+            GUI.Label(rect, displayText, textStyle);
         }
 
         string tooltip = $"Position: ({x}, {y})\n" +
@@ -96,7 +87,8 @@ public class LetterData2DArrayDrawer : OdinAttributeDrawer<TableMatrixAttribute,
         GUI.tooltip = tooltip;
     }
 
-    private Color GetCellBGColor(LetterData letter)
+    
+    private Color GetCellBgColor(LetterData letter)
     {
         if (string.IsNullOrEmpty(letter.name))
         {

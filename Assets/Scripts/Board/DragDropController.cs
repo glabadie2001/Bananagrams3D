@@ -111,7 +111,6 @@ public class DragDropController : MonoBehaviour
         }
         
         Vector3 cursorWorldPos = ray.GetPoint(distance);
-        Debug.Log($"Cursor world position: {cursorWorldPos}");
         
         var gameManager = GameManager.inst;
         
@@ -138,7 +137,7 @@ public class DragDropController : MonoBehaviour
         }
         
         // Check if cursor is within hand bounds
-        if (HandManager.inst != null && HandManager.inst.IsWithinHandBounds(cursorWorldPos))
+        if (GameManager.inst.hand.IsWithinBounds(cursorWorldPos))
         {
             // Within hand bounds - return to hand
             if (TryReturnToHand(cursorWorldPos))
@@ -251,9 +250,7 @@ public class DragDropController : MonoBehaviour
         var gameManager = GameManager.inst;
         if (gameManager?.board == null || currentDragTile == null) return false;
         
-        // Get snapped board position
         Vector3 boardPosition = gameManager.board.SnapToGrid(cursorWorldPos);
-        Debug.Log($"Snapped position: {boardPosition}");
         
         if (currentDragTile.Location == TileLocation.Hand)
         {

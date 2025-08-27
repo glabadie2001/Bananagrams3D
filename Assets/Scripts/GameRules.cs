@@ -11,8 +11,8 @@ public class GameRules : ScriptableObject
     public List<LetterData> letters;
     public List<BagLetterEntry> startingBag;
     public GameObject tilePrefab;
-    public GameObject handTilePrefab;
-
+    public int minWordLength;
+    
     public IEnumerable<ValueDropdownItem<int>> GetLetterIndexOptions()
     {
         if (letters == null) yield break;
@@ -74,11 +74,18 @@ public struct WordData
     {
         float total = 0;
         foreach (LetterData c in chars)
-        {
             total += c.Score();
-        }
 
         return total;
+    }
+
+    public string Text()
+    {
+        string txt = "";
+        foreach (LetterData c in chars)
+            txt += c.name;
+        
+        return txt;
     }
 }
 

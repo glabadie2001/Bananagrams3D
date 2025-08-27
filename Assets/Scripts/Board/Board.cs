@@ -1,13 +1,7 @@
 using Sirenix.OdinInspector;
 using Sirenix.Serialization;
-using Sirenix.Utilities;
-using Sirenix.Utilities.Editor;
 using System;
 using System.Collections.Generic;
-
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
 using UnityEngine;
 
 
@@ -165,50 +159,49 @@ public class Board : SerializedMonoBehaviour
         return false;
     }
 
+    private void ProcessTileForWord(LetterData tile, List<LetterData> currWord, List<WordData> words)
+    {
+        if (tile.name == string.Empty)
+        {
+            if (currWord.Count >= rules.minWordLength) words.Add(new WordData(currWord));
+            currWord.Clear();
+        }
+        else
+        {
+            currWord.Add(tile);
+        }
+    }
+
     [Button("Get Words")]
-    List<WordData> ScanForWords()
+    public List<WordData> ScanForWords()
     {
         List<WordData> words = new List<WordData>();
         
         List<LetterData> currWord = new List<LetterData>();
         
-        //Scan rights
+        //Scan downs
         for (int x = 0; x < this.width; x++)
         {
-            for (int y = 0; y < this.height; y++)
+            for (int y = this.height - 1; y >= 0; y--)
             {
-                if (state.tiles[x, y].name != string.Empty)
-                    currWord.Add(state.tiles[x, y]);
-                else if (currWord.Count > 0)
-                {
-                    //Add word on blank
-                    words.Add(new WordData(currWord));
-                    currWord.Clear();
-                }
+                ProcessTileForWord(state.tiles[x, y], currWord, words);
             }
 
-            if (currWord.Count == 0) continue;
-            // Add word at end of row (if we have one) ((literal edge case))
+            if (currWord.Count < rules.minWordLength) continue;
+            // Add word at end of column (if we have one) ((literal edge case))
             words.Add(new WordData(currWord));
             currWord.Clear();
         }
         
-        //Scan downs
-        for (int y = 0; y < this.height; y++)
+        //Scan rights
+        for (int y = this.height - 1; y >= 0; y--)
         {
             for (int x = 0; x < this.width; x++)
             {
-                if (state.tiles[x, y].name != string.Empty)
-                    currWord.Add(state.tiles[x, y]);
-                else if (currWord.Count > 0)
-                {
-                    //Add word on blank
-                    words.Add(new WordData(currWord));
-                    currWord.Clear();
-                }
+                ProcessTileForWord(state.tiles[x, y], currWord, words);
             }
 
-            if (currWord.Count == 0) continue;
+            if (currWord.Count < rules.minWordLength) continue;
             // Add word at end of row (if we have one) ((literal edge case))
             words.Add(new WordData(currWord));
             currWord.Clear();

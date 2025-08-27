@@ -145,3 +145,5 @@ MonoBehaviour:
   - letterIndex: 25
     count: 2
   tilePrefab: {fileID: 2727955367877423791, guid: 6f612ed86ac799647840f3c33b9f4547, type: 3}
+  handTilePrefab: {fileID: 0}
+  minWordLength: 2

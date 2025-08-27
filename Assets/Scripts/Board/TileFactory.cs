@@ -26,7 +26,7 @@ public static class TileFactory
         if (tile == null)
             tile = tileObj.AddComponent<Tile>();
         
-        tile.Initialize(letter, camera);
+        tile.Initialize(letter);
         tile.SetOriginalPosition(position);
         tile.SetLocation(location);
         
