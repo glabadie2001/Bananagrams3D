@@ -6,6 +6,8 @@ public class UIManager : MonoBehaviour
 {
     public static UIManager inst;
 
+    public TMP_Text wordDisplay;
+
     void Awake()
     {
         if (inst == null)
@@ -17,8 +19,10 @@ public class UIManager : MonoBehaviour
     /// <summary>
     /// Debug function for displaying all scored words.
     /// </summary>
-    public void DrawWords(TMP_Text wordDisplay)
+    public void DrawWords()
     {
+        Debug.Log("Drawing!");
+
         if (GameManager.inst == null || GameManager.inst.board == null)
             throw new MissingReferenceException("Could not find the active board. Make sure there is a GameManager in the scene.");
 

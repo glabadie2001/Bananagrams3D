@@ -22,12 +22,7 @@ public class GameManager : MonoBehaviour
     [Header("Game State")]
     [SerializeField] private Bag<LetterData> reserve;
     [SerializeField] private List<LetterData> discard;
-    [SerializeField] public GameZone<LetterData> hand;
-    
-    /// <summary>
-    /// Maximum tiles allowed in hand. Consider moving to GameConfig or GameZone?
-    /// </summary>
-    public int handSize = 21;
+    [SerializeField] public LinearGameZone<LetterData> hand;
 
     void Awake()
     {
@@ -74,12 +69,14 @@ public class GameManager : MonoBehaviour
     /// <summary>
     /// Draws tiles from reserve to fill player's hand up to maximum size.
     /// Updates both data state and visual representation.
+    /// PRECONDITION: An empty hand
+    /// POSTCONDITION: A full hand
+    /// TODO: Create the board piecemeal rather than redrawing everything.
     /// </summary>
     [Button("Draw Hand")]
     public void DrawHand()
     {
-        // Draw letters from bag to fill hand up to handSize
-        while (hand.Count < handSize && reserve.Count > 0)
+        while (hand.Count < hand.Capacity && reserve.Count > 0)
         {
             var letter = reserve.Pull();
             hand.Add(letter);
@@ -160,5 +157,6 @@ public class GameManager : MonoBehaviour
     private void OnDrawGizmos()
     {
         hand.Renderer.OnDrawGizmos();
+        board.Renderer.OnDrawGizmos();
     }
 }

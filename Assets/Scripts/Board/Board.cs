@@ -1,79 +1,27 @@
 using Sirenix.OdinInspector;
-using Sirenix.Serialization;
-using System;
 using System.Collections.Generic;
 using UnityEngine;
-
-
 
 /// <summary>
 /// Manages the game board state and coordinates with visual representation.
 /// Handles tile placement validation and grid coordinate transformations.
 /// TODO: Consider separating BoardData from BoardRenderer for better SRP.
 /// </summary>
-public class Board : SerializedMonoBehaviour
+[System.Serializable]
+public class Board : GridGameZone<LetterData>
 {
-    [NonSerialized, OdinSerialize]
-    public BoardState state;
-
-    [Header("Board Dimensions")]
-    [Tooltip("Board width in grid units")]
-    public int width = 20;
-    
-    [Tooltip("Board height in grid units")]
-    public int height = 20;
-    
     private GameRules rules;
-    private BoardPlaneGenerator planeGenerator;
 
-    private void Awake()
-    {
-        state = new BoardState(width, height);
-        planeGenerator = GetComponent<BoardPlaneGenerator>();
-        if (planeGenerator == null)
-        {
-            planeGenerator = gameObject.AddComponent<BoardPlaneGenerator>();
-        }
-        Debug.Log(state.tiles.GetLength(0) + "x" + state.tiles.GetLength(1) + " board initialized.");
-    }
-
-    /// <summary>
-    /// Initializes the board with game rules and sets up visual representation.
-    /// Call this after setting up the GameManager and before starting play.
-    /// </summary>
-    [Button("Init Board")]
     public void Initialize(GameRules gameRules)
     {
-        this.rules = gameRules;
-        
-        // Set board dimensions for plane generator
-        if (planeGenerator != null)
-        {
-            planeGenerator.SetBoardDimensions(state.tiles.GetLength(0), state.tiles.GetLength(1));
-        }
-        
-        // Clear board state
-        for (int x = 0; x < state.tiles.GetLength(0); x++)
-        {
-            for (int y = 0; y < state.tiles.GetLength(1); y++)
-            {
-                state.tiles[x, y] = new LetterData(string.Empty, 0, null);
-            }
-        }
+        rules = gameRules;
+        contents = new LetterData[Width * Height];
+        Renderer.Initialize(container);
     }
 
-    [Button("Generate Grid Lines")]
-    public void GeneratePhysicalBoard()
+    public void Draw()
     {
-        if (planeGenerator != null)
-        {
-            planeGenerator.GenerateBoard();
-        }
-    }
-
-    void Draw()
-    {
-        // STUB
+        ((IGridZoneRenderer<LetterData>)Renderer).RenderGrid(this, Width, Height);
     }
 
     /// <summary>
@@ -87,12 +35,12 @@ public class Board : SerializedMonoBehaviour
     {
         Vector2Int gridPos = WorldToGridPosition(worldPosition);
         
-        if (IsValidGridPosition(gridPos) && state.tiles[gridPos.x, gridPos.y].name == string.Empty)
+        if (IsValidGridPosition(gridPos) && (this[gridPos.x, gridPos.y].name == null || this[gridPos.x, gridPos.y].name == string.Empty))
         {
-            state.tiles[gridPos.x, gridPos.y] = letter;
+            this[gridPos.x, gridPos.y] = letter;
             
             // Create visual representation
-            TileFactory.CreateBoardTile(letter, rules.tilePrefab, transform, worldPosition);
+            TileFactory.CreateBoardTile(letter, rules.tilePrefab, container, worldPosition);
             
             return true;
         }
@@ -102,31 +50,18 @@ public class Board : SerializedMonoBehaviour
     
     private Vector2Int WorldToGridPosition(Vector3 worldPos)
     {
-        if (planeGenerator != null)
-        {
-            return GridSystem.WorldToGridPosition(worldPos, planeGenerator.GetBoardRect(), state.tiles.GetLength(0), state.tiles.GetLength(1));
-        }
-        else
-        {
-            return GridSystem.WorldToGridPosition(worldPos, state.tiles.GetLength(0), state.tiles.GetLength(1));
-        }
+        return GridSystem.WorldToGridPosition(worldPos, Renderer.GetBounds, Width, Height);
     }
     
     private bool IsValidGridPosition(Vector2Int gridPos)
     {
-        return GridSystem.IsValidGridPosition(gridPos, state.tiles.GetLength(0), state.tiles.GetLength(1));
+        return GridSystem.IsValidGridPosition(gridPos, Width, Height);
     }
     
     public Vector3 SnapToGrid(Vector3 worldPosition)
     {
-        if (planeGenerator != null)
-        {
-            return GridSystem.SnapToGrid(worldPosition, planeGenerator.GetBoardRect(), state.tiles.GetLength(0), state.tiles.GetLength(1));
-        }
-        else
-        {
-            return GridSystem.SnapToGrid(worldPosition);
-        }
+
+        return GridSystem.SnapToGrid(worldPosition, Renderer.GetBounds, Width, Height);
     }
 
     public void RemoveTileAt(Vector3 worldPosition)
@@ -135,7 +70,8 @@ public class Board : SerializedMonoBehaviour
         
         if (IsValidGridPosition(gridPos))
         {
-            state.tiles[gridPos.x, gridPos.y] = new LetterData(string.Empty, 0, null);
+            Debug.Log($"Removed at {gridPos.x} {gridPos.y}");
+            this[gridPos.x, gridPos.y] = new LetterData(null, 0, null);
         }
     }
 
@@ -150,9 +86,10 @@ public class Board : SerializedMonoBehaviour
     {
         Vector2Int gridPos = WorldToGridPosition(worldPosition);
         
-        if (IsValidGridPosition(gridPos) && state.tiles[gridPos.x, gridPos.y].name == string.Empty)
+        if (IsValidGridPosition(gridPos) && (this[gridPos.x, gridPos.y].name == null || this[gridPos.x, gridPos.y].name == string.Empty))
         {
-            state.tiles[gridPos.x, gridPos.y] = letter;
+            Debug.Log(letter.name);
+            this[gridPos.x, gridPos.y] = letter;
             return true;
         }
         
@@ -161,7 +98,7 @@ public class Board : SerializedMonoBehaviour
 
     private void ProcessTileForWord(LetterData tile, List<LetterData> currWord, List<WordData> words)
     {
-        if (tile.name == string.Empty)
+        if (tile.name == null)
         {
             if (currWord.Count >= rules.minWordLength) words.Add(new WordData(currWord));
             currWord.Clear();
@@ -178,27 +115,28 @@ public class Board : SerializedMonoBehaviour
         List<WordData> words = new List<WordData>();
         
         List<LetterData> currWord = new List<LetterData>();
-        
         //Scan downs
-        for (int x = 0; x < this.width; x++)
+        for (int x = 0; x < Width; x++)
         {
-            for (int y = this.height - 1; y >= 0; y--)
+            for (int y = Height - 1; y >= 0; y--)
             {
-                ProcessTileForWord(state.tiles[x, y], currWord, words);
+                ProcessTileForWord(this[x, y], currWord, words);
+                Debug.Log(currWord.Count);
             }
 
             if (currWord.Count < rules.minWordLength) continue;
             // Add word at end of column (if we have one) ((literal edge case))
             words.Add(new WordData(currWord));
+            Debug.Log(currWord);
             currWord.Clear();
         }
         
         //Scan rights
-        for (int y = this.height - 1; y >= 0; y--)
+        for (int y = Height - 1; y >= 0; y--)
         {
-            for (int x = 0; x < this.width; x++)
+            for (int x = 0; x < Width; x++)
             {
-                ProcessTileForWord(state.tiles[x, y], currWord, words);
+                ProcessTileForWord(this[x, y], currWord, words);
             }
 
             if (currWord.Count < rules.minWordLength) continue;
@@ -224,11 +162,5 @@ public class Board : SerializedMonoBehaviour
         Debug.Log(total);
 
         return total;
-    }
-
-    void Clear()
-    {
-        state.Clear();
-        Draw();
     }
 }

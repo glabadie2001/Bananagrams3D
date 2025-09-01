@@ -20,6 +20,7 @@ public class DragDropController : MonoBehaviour
     [SerializeField] private Transform boardArea;
     
     private InputManager inputManager;
+    [SerializeField]
     private Tile currentDragTile;
     private GameObject currentDragObject;
     private Vector3 dragOffset;
@@ -67,7 +68,7 @@ public class DragDropController : MonoBehaviour
 
     private void StartDrag()
     {
-        if (!isDragging && inputManager != null)
+        if (!isDragging)
         {
             Ray ray = inputManager.GetCameraRay(playerCamera);
             
@@ -111,28 +112,23 @@ public class DragDropController : MonoBehaviour
         }
         
         Vector3 cursorWorldPos = ray.GetPoint(distance);
-        
-        var gameManager = GameManager.inst;
-        
-        // Check if cursor is within board bounds
-        if (gameManager?.board != null)
-        {
-            var boardPlaneGenerator = gameManager.board.GetComponent<BoardPlaneGenerator>();
-            if (boardPlaneGenerator != null)
-            {
-                Rect boardRect = boardPlaneGenerator.GetBoardRect();
                 
-                if (cursorWorldPos.x >= boardRect.x && cursorWorldPos.x <= boardRect.x + boardRect.width &&
-                    cursorWorldPos.z >= boardRect.y && cursorWorldPos.z <= boardRect.y + boardRect.height)
-                {
-                    // Within board bounds - try to place on board
-                    if (TryPlaceOnBoard(cursorWorldPos))
-                    {
-                        Debug.Log("Successfully placed on board");
-                        ClearDragState();
-                        return;
-                    }
-                }
+        // Check if cursor is within board bounds
+        if (GameManager.inst.board.IsWithinBounds(cursorWorldPos))
+        {
+            //if (GameManager.inst.board.PlaceTileDataOnly(currentDragTile.Letter, cursorWorldPos))
+            //{
+            //    Debug.Log("Successfully placed on board");
+            //    GameManager.inst.board.Draw();
+            //    ClearDragState();
+            //    return;
+            //}
+            if (TryPlaceOnBoard(cursorWorldPos))
+            {
+                Debug.Log("Successfully placed on board");
+                GameManager.inst.board.Draw();
+                ClearDragState();
+                return;
             }
         }
         
@@ -218,27 +214,14 @@ public class DragDropController : MonoBehaviour
     }
     
     private Vector3 GetPreviewPosition(Vector3 cursorWorldPos)
-    {
-        var gameManager = GameManager.inst;
-        
+    {        
         // Check if cursor is within board bounds
-        if (gameManager?.board != null)
+        if (GameManager.inst.board != null && GameManager.inst.board.IsWithinBounds(cursorWorldPos))
         {
-            var boardPlaneGenerator = gameManager.board.GetComponent<BoardPlaneGenerator>();
-            if (boardPlaneGenerator != null)
-            {
-                Rect boardRect = boardPlaneGenerator.GetBoardRect();
-                
-                // Check if cursor is within board bounds
-                if (cursorWorldPos.x >= boardRect.x && cursorWorldPos.x <= boardRect.x + boardRect.width &&
-                    cursorWorldPos.z >= boardRect.y && cursorWorldPos.z <= boardRect.y + boardRect.height)
-                {
-                    // Within board bounds - snap to grid position at drag height
-                    Vector3 snappedBoardPos = gameManager.board.SnapToGrid(cursorWorldPos);
-                    snappedBoardPos.y = GameConstants.Grid.DRAG_HEIGHT;
-                    return snappedBoardPos;
-                }
-            }
+            // Within board bounds - snap to grid position at drag height
+            Vector3 snappedBoardPos = GameManager.inst.board.SnapToGrid(cursorWorldPos);
+            snappedBoardPos.y = GameConstants.Grid.DRAG_HEIGHT;
+            return snappedBoardPos;
         }
         
         // Outside board bounds - follow cursor directly at drag height
@@ -247,28 +230,27 @@ public class DragDropController : MonoBehaviour
     
     private bool TryPlaceOnBoard(Vector3 cursorWorldPos)
     {
-        var gameManager = GameManager.inst;
-        if (gameManager?.board == null || currentDragTile == null) return false;
+        if (GameManager.inst.board == null || currentDragTile == null) return false;
         
-        Vector3 boardPosition = gameManager.board.SnapToGrid(cursorWorldPos);
+        Vector3 boardPosition = GameManager.inst.board.SnapToGrid(cursorWorldPos);
         
         if (currentDragTile.Location == TileLocation.Hand)
         {
-            if (gameManager.TryPlaceTileObject(currentDragTile, boardPosition))
+            if (GameManager.inst.board.PlaceTileDataOnly(currentDragTile.Letter, boardPosition))
             {
-                // Set location and position
-                currentDragTile.SetLocation(TileLocation.Board);
-                currentDragObject.transform.position = boardPosition;
-                currentDragObject.transform.SetParent(gameManager.board.transform);
+                GameManager.inst.hand.Remove(currentDragTile.Letter);
+                GameManager.inst.hand.Draw();
+                Destroy(currentDragTile.gameObject);
                 return true;
             }
         }
         else if (currentDragTile.Location == TileLocation.Board)
         {
-            if (gameManager.TryPlaceBoardTileAt(currentDragTile.Letter, boardPosition))
+            if (GameManager.inst.board.PlaceTileDataOnly(currentDragTile.Letter, boardPosition))
             {
-                // Update position
-                currentDragObject.transform.position = boardPosition;
+                Debug.Log(originalPosition);
+                GameManager.inst.board.RemoveTileAt(originalPosition);
+                Destroy(currentDragTile.gameObject);
                 return true;
             }
         }
@@ -284,6 +266,7 @@ public class DragDropController : MonoBehaviour
         if (currentDragTile.Location == TileLocation.Board && gameManager != null)
         {
             gameManager.ReturnTileToHand(currentDragTile);
+            Destroy(currentDragTile.gameObject);
             return true;
         }
         else if (currentDragTile.Location == TileLocation.Hand)

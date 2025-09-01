@@ -61,18 +61,20 @@ public static class TileFactory
     
     private static void ConfigureTileInteraction(Tile tile)
     {
-        var dragController = Object.FindFirstObjectByType<DragDropController>();
-        if (dragController != null)
-        {
-            tile.enabled = false;
-        }
-        else
-        {
-            tile.OnTilePlaced += (t, pos) => Debug.Log($"Tile fallback: {t.Letter.name} placed");
-            tile.OnTileReturned += (t) => Debug.Log($"Tile fallback: {t.Letter.name} returned");
-        }
+        tile.OnTilePlaced += (t, pos) => Debug.Log($"Tile fallback: {t.Letter.name} placed");
+        tile.OnTileReturned += (t) => Debug.Log($"Tile fallback: {t.Letter.name} returned");
+        //var dragController = Object.FindFirstObjectByType<DragDropController>();
+        //if (dragController != null)
+        //{
+        //    tile.enabled = false;
+        //}
+        //else
+        //{
+        //    tile.OnTilePlaced += (t, pos) => Debug.Log($"Tile fallback: {t.Letter.name} placed");
+        //    tile.OnTileReturned += (t) => Debug.Log($"Tile fallback: {t.Letter.name} returned");
+        //}
     }
-    
+
     public static void DestroyTile(GameObject tileObj)
     {
         if (tileObj != null)

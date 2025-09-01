@@ -2,8 +2,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using Sirenix.OdinInspector;
 
-[System.Serializable]
-public class HandRenderer : ScriptableObject, IZoneRenderer<LetterData>, IZoneBounds
+[System.Serializable, CreateAssetMenu(menuName = "Bananagrams/Renderer/Hand Renderer")]
+public class HandRenderer : ScriptableObject, IZoneRenderer<LetterData>
 {
     [Header("Hand Display Settings")]
     private Transform handContainer;
@@ -14,7 +14,9 @@ public class HandRenderer : ScriptableObject, IZoneRenderer<LetterData>, IZoneBo
     [Header("Hand Bounds")]
     [SerializeField] private Rect handBounds = new Rect(-10f, -8f, 8.4f, 4.8f);
     [SerializeField] private bool showBoundsGizmo = true;
-    
+
+    public Rect GetBounds => handBounds;
+
     public void Initialize(Transform container)
     {
         handContainer = container;

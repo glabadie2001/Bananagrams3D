@@ -41,12 +41,12 @@ public static class GridSystem
         return new Vector2Int(x, z);
     }
     
-    public static Vector3 GridToWorldPosition(Vector2Int gridPos, int boardWidth = 15, int boardHeight = 15, float height = BOARD_HEIGHT)
+    public static Vector3 GridToWorldPosition(int x, int y, int boardWidth = 15, int boardHeight = 15, float height = BOARD_HEIGHT)
     {
-        int x = gridPos.x - boardWidth / 2;
-        int z = gridPos.y - boardHeight / 2;
+        int worldX = x - boardWidth / 2;
+        int worldZ = y - boardHeight / 2;
         
-        return new Vector3(x * GRID_SIZE, height, z * GRID_SIZE);
+        return new Vector3(worldX * GRID_SIZE, height, worldZ * GRID_SIZE);
     }
     
     public static bool IsValidGridPosition(Vector2Int gridPos, int boardWidth = 15, int boardHeight = 15)

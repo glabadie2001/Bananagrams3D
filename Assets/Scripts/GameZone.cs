@@ -4,69 +4,29 @@ using UnityEngine;
 using Sirenix.OdinInspector;
 
 [System.Serializable]
-public class GameZone<T> : IEnumerable<T>
+public abstract class GameZone<T> : IEnumerable<T>
 {
     [Header("Zone Configuration")]
-    [SerializeField, Required] 
+    [Required]
     public Transform container;
-    
+
     [SerializeField, InlineProperty]
     [ValidateInput("ValidateRenderer", "Assigned object must implement IZoneRenderer<T>")]
-    private ScriptableObject rendererAsset;
-    
+    protected ScriptableObject rendererAsset;
+
     public IZoneRenderer<T> Renderer => rendererAsset as IZoneRenderer<T>;
-    
-    [SerializeField, ReadOnly, ShowInInspector]
-    private List<T> contents = new List<T>();
-    
-    public IEnumerable<T> Contents => contents;
-    public int Count => contents.Count;
-    
-    public T this[int index]
-    {
-        get => contents[index];
-        set => contents[index] = value;
-    }
-    
-    public void Add(T item)
-    {
-        contents.Add(item);
-    }
-    
-    public bool Remove(T item)
-    {
-        return contents.Remove(item);
-    }
-    
-    public void RemoveAt(int index)
-    {
-        contents.RemoveAt(index);
-    }
-    
-    public void Clear()
-    {
-        contents.Clear();
-    }
-    
-    public bool Contains(T item)
-    {
-        return contents.Contains(item);
-    }
-    
-    public void InitializeRenderer(IZoneRenderer<T> renderer)
-    {
-        if (renderer is ScriptableObject so)
-        {
-            rendererAsset = so;
-        }
-        else
-        {
-            // For non-ScriptableObject renderers, we can't assign directly
-            // This would require a different architecture for non-SO renderers
-            Debug.LogWarning("Cannot assign non-ScriptableObject renderer to GameZone. Use SetRendererAsset() instead.");
-        }
-    }
-    
+
+    // Abstract properties that derived classes must implement
+    public abstract int Count { get; }
+    public abstract int Capacity { get; }
+
+    // Core operations that derived classes must implement
+    public abstract void Clear();
+    public abstract bool Contains(T item);
+    public abstract IEnumerator<T> GetEnumerator();
+
+    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+
     public void SetRendererAsset(ScriptableObject asset)
     {
         if (asset == null || asset is IZoneRenderer<T>)
@@ -78,41 +38,31 @@ public class GameZone<T> : IEnumerable<T>
             Debug.LogError($"Asset {asset.name} does not implement IZoneRenderer<{typeof(T).Name}>");
         }
     }
-    
-    public IEnumerator<T> GetEnumerator()
-    {
-        return contents.GetEnumerator();
-    }
-    
-    IEnumerator IEnumerable.GetEnumerator()
-    {
-        return GetEnumerator();
-    }
-    
+
     [Button("Refresh Zone Display")]
     [ShowIf("@Renderer != null")]
-    public void RefreshDisplay()
+    public virtual void RefreshDisplay()
     {
-        Renderer?.Render(contents);
+        Renderer?.Initialize(container);
+        RenderContents();
     }
-    
+
+    // Let derived classes decide how to pass their data to the renderer
+    protected abstract void RenderContents();
+
     [InfoBox("Renderer is not assigned. Zone will not display visually.", InfoMessageType.Warning)]
     [ShowIf("@Renderer == null")]
     public bool ShowRendererWarning => true;
-    
-    private bool ValidateRenderer()
+
+    protected bool ValidateRenderer()
     {
-        if (rendererAsset == null) return true; // Allow null
+        if (rendererAsset == null) return true;
         return rendererAsset is IZoneRenderer<T>;
     }
-    
+
     public bool IsWithinBounds(Vector3 worldPosition)
     {
-        if (Renderer is IZoneBounds boundsChecker)
-        {
-            return boundsChecker.IsWithinBounds(worldPosition);
-        }
-        return false;
+        return Renderer.IsWithinBounds(worldPosition);
     }
 }
 
@@ -121,9 +71,13 @@ public interface IZoneRenderer<T>
     public void Initialize(Transform container);
     public void Render(IEnumerable<T> list);
     public void OnDrawGizmos();
+
+    bool IsWithinBounds(Vector3 worldPosition);
+
+    public Rect GetBounds { get; }
 }
 
-public interface IZoneBounds
+public interface IGridZoneRenderer<T> : IZoneRenderer<T>
 {
-    bool IsWithinBounds(Vector3 worldPosition);
+    void RenderGrid(GridGameZone<T> grid, int width, int height);
 }
