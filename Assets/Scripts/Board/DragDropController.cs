@@ -12,7 +12,6 @@ public class DragDropController : MonoBehaviour
     [SerializeField] private Camera playerCamera;
     [SerializeField] private LayerMask draggableLayerMask = 1;
     [SerializeField] private LayerMask boardLayerMask = 1;
-    [SerializeField] private LayerMask boardTileLayerMask = 1;
     [SerializeField] private LayerMask handAreaLayerMask = 1;
     
     [Header("Area Detection")]
@@ -76,18 +75,8 @@ public class DragDropController : MonoBehaviour
             if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, draggableLayerMask))
             {
                 Tile tile = hit.collider.GetComponent<Tile>();
-                if (tile != null)
-                {
-                    StartDrag(tile, hit.point);
-                    return;
-                }
-            }
-            
-            // Also check board tile layer mask for backward compatibility
-            if (Physics.Raycast(ray, out hit, Mathf.Infinity, boardTileLayerMask))
-            {
-                Tile tile = hit.collider.GetComponent<Tile>();
-                if (tile != null)
+                Debug.Log(tile.Letter.locked);
+                if (tile != null && !tile.Letter.locked)
                 {
                     StartDrag(tile, hit.point);
                     return;
@@ -116,13 +105,6 @@ public class DragDropController : MonoBehaviour
         // Check if cursor is within board bounds
         if (GameManager.inst.board.IsWithinBounds(cursorWorldPos))
         {
-            //if (GameManager.inst.board.PlaceTileDataOnly(currentDragTile.Letter, cursorWorldPos))
-            //{
-            //    Debug.Log("Successfully placed on board");
-            //    GameManager.inst.board.Draw();
-            //    ClearDragState();
-            //    return;
-            //}
             if (TryPlaceOnBoard(cursorWorldPos))
             {
                 Debug.Log("Successfully placed on board");

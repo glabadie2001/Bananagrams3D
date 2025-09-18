@@ -8,7 +8,9 @@ public class BoardRenderer : ScriptableObject, IGridZoneRenderer<LetterData>
     [Header("Display Settings")]
     private Transform handContainer;
     [SerializeField] private GameObject tilePrefab;
-    
+    [SerializeField] private Color tileColor;
+    [SerializeField] private Color lockedTileColor;
+
     [Header("Bounds")]
     [SerializeField] private Rect boardBounds = new Rect(0, 0, 15f, 15f);
     [SerializeField] private bool showBoundsGizmo = true;
@@ -44,6 +46,11 @@ public class BoardRenderer : ScriptableObject, IGridZoneRenderer<LetterData>
 
         // 4. Create the tile using the correctly calculated position and your vertical offset.
         GameObject tileObj = TileFactory.CreateBoardTile(letter, tilePrefab, handContainer, centeredPosition + Vector3.up * zOffset);
+
+        if (letter.locked)
+            tileObj.GetComponent<MeshRenderer>().material.color = lockedTileColor;
+        else
+            tileObj.GetComponent<MeshRenderer>().material.color = tileColor;
     }
 
     private void DestroyBoardTile(Tile tile)
@@ -88,14 +95,13 @@ public class BoardRenderer : ScriptableObject, IGridZoneRenderer<LetterData>
                worldPos2D.y >= boundsMin.y && worldPos2D.y <= boundsMax.y;
     }
 
-    public void RenderGrid(GridGameZone<LetterData> grid, int width, int height)
+    public void RenderGrid(IReadOnlyGrid<LetterData> grid, int width, int height)
     {
         ClearBoard();
         for (int x = 0; x < width; x++)
         {
             for (int y = 0; y < height; y++)
             {
-                Debug.Log(grid[x, y].name);
                 if (grid[x, y].name == null) continue;
 
                 CreateBoardTile(grid[x, y], x, y, width, height);

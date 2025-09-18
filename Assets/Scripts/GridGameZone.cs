@@ -2,8 +2,12 @@ using Sirenix.OdinInspector;
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// Genericized game zone for holding a 2D array of items.
+/// </summary>
+/// <typeparam name="T">Type held in zone.</typeparam>
 [System.Serializable]
-public class GridGameZone<T> : GameZone<T>
+public class GridGameZone<T> : GameZone<T>, IReadOnlyGrid<T>
 {
     [SerializeField]
     private int width;

@@ -41,22 +41,30 @@ public class GameRules : ScriptableObject
 }
 
 [System.Serializable]
-public struct LetterData
+public class LetterData
 {
     public string name;
     public int baseValue;
     public Material baseMat;
+    public bool locked;
 
-    public LetterData(string _text, int _baseValue, Material _baseMat)
+    public LetterData(string _text, int _baseValue, Material _baseMat, bool _locked)
     {
         name = _text;
         baseValue = _baseValue;
         baseMat = _baseMat;
+        locked = _locked;
     }
 
     public float Score()
     {
         return baseValue;
+    }
+
+    public void Lock()
+    {
+        locked = true;
+        Debug.Log($"{name} locked");
     }
 }
 

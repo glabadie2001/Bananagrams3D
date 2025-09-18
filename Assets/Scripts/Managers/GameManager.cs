@@ -93,11 +93,8 @@ public class GameManager : MonoBehaviour
             discard.Add(hand[0]);
             hand.RemoveAt(0);
         }
-        
-        if (hand.Renderer is HandRenderer handRenderer)
-            handRenderer.ClearHand();
-        else
-            hand.Clear();
+
+        hand.Renderer.Render(hand);
     }
     
     /// <summary>

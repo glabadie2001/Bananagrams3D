@@ -67,7 +67,7 @@ PrefabInstance:
     - target: {fileID: -7511558181221131132, guid: 543a967e034074f49ae8e235a2bd2e96, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 2100000, guid: 4bbb357cc0b525e40a90d1111ae6af33, type: 2}
     - target: {fileID: 919132149155446097, guid: 543a967e034074f49ae8e235a2bd2e96, type: 3}
       propertyPath: m_Name
       value: TilePrefab
@@ -129,3 +129,4 @@ MonoBehaviour:
     name: 
     baseValue: 0
     baseMat: {fileID: 0}
+    locked: 0

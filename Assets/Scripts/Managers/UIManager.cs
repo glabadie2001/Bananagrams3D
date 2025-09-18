@@ -21,10 +21,12 @@ public class UIManager : MonoBehaviour
     /// </summary>
     public void DrawWords()
     {
-        Debug.Log("Drawing!");
+        GameManager.inst.board.Lock();
 
         if (GameManager.inst == null || GameManager.inst.board == null)
             throw new MissingReferenceException("Could not find the active board. Make sure there is a GameManager in the scene.");
+
+        wordDisplay.text = "";
 
         List<WordData> words = GameManager.inst.board.ScanForWords();
         foreach (WordData word in words)
@@ -32,5 +34,7 @@ public class UIManager : MonoBehaviour
             string append = $"{word.Text()} ({word.Score()})\n";;
             wordDisplay.text += append;
         }
+
+        wordDisplay.text += $"\n{GameManager.inst.board.Score()} total points";
     }
 }

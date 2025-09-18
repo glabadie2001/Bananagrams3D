@@ -18,7 +18,7 @@ public class BoardState
         {
             for (int j = 0; j < height; j++)
             {
-                tiles[i, j] = new LetterData(string.Empty, 0, null);
+                tiles[i, j] = new LetterData(string.Empty, 0, null, false);
             }
         }
     }
@@ -29,7 +29,7 @@ public class BoardState
         {
             for (int j = 0; j < tiles.GetLength(1); j++)
             {
-                tiles[i, j] = new LetterData(string.Empty, 0, null);
+                tiles[i, j] = new LetterData(string.Empty, 0, null, false);
             }
         }
     }

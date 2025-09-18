@@ -79,5 +79,5 @@ public interface IZoneRenderer<T>
 
 public interface IGridZoneRenderer<T> : IZoneRenderer<T>
 {
-    void RenderGrid(GridGameZone<T> grid, int width, int height);
+    void RenderGrid(IReadOnlyGrid<T> grid, int width, int height);
 }

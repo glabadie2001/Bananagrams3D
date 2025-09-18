@@ -23,30 +23,6 @@ public class Board : GridGameZone<LetterData>
     {
         ((IGridZoneRenderer<LetterData>)Renderer).RenderGrid(this, Width, Height);
     }
-
-    /// <summary>
-    /// Places a tile on the board, creating both data and visual representation.
-    /// Use this for initial tile placement from hand.
-    /// </summary>
-    /// <param name="letter">Letter data to place</param>
-    /// <param name="worldPosition">World position for placement</param>
-    /// <returns>True if placement was successful</returns>
-    public bool PlaceTile(LetterData letter, Vector3 worldPosition)
-    {
-        Vector2Int gridPos = WorldToGridPosition(worldPosition);
-        
-        if (IsValidGridPosition(gridPos) && (this[gridPos.x, gridPos.y].name == null || this[gridPos.x, gridPos.y].name == string.Empty))
-        {
-            this[gridPos.x, gridPos.y] = letter;
-            
-            // Create visual representation
-            TileFactory.CreateBoardTile(letter, rules.tilePrefab, container, worldPosition);
-            
-            return true;
-        }
-        
-        return false;
-    }
     
     private Vector2Int WorldToGridPosition(Vector3 worldPos)
     {
@@ -71,7 +47,7 @@ public class Board : GridGameZone<LetterData>
         if (IsValidGridPosition(gridPos))
         {
             Debug.Log($"Removed at {gridPos.x} {gridPos.y}");
-            this[gridPos.x, gridPos.y] = new LetterData(null, 0, null);
+            this[gridPos.x, gridPos.y] = new LetterData(null, 0, null, false);
         }
     }
 
@@ -86,7 +62,8 @@ public class Board : GridGameZone<LetterData>
     {
         Vector2Int gridPos = WorldToGridPosition(worldPosition);
         
-        if (IsValidGridPosition(gridPos) && (this[gridPos.x, gridPos.y].name == null || this[gridPos.x, gridPos.y].name == string.Empty))
+        if (IsValidGridPosition(gridPos) &&
+            (this[gridPos.x, gridPos.y].name == null || this[gridPos.x, gridPos.y].name == string.Empty))
         {
             Debug.Log(letter.name);
             this[gridPos.x, gridPos.y] = letter;
@@ -162,5 +139,14 @@ public class Board : GridGameZone<LetterData>
         Debug.Log(total);
 
         return total;
+    }
+
+    public void Lock()
+    {
+        foreach(LetterData l in contents)
+        {
+            l.Lock();
+        }
+        Draw();
     }
 }
