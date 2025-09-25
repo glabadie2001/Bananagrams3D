@@ -1,114 +1,70 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using System;
 
 public class InputManager : MonoBehaviour
 {
-    [Header("Input Configuration")]
-    [SerializeField] private InputActionAsset inputActions;
-    [SerializeField] private string actionMapName = "Player";
-    [SerializeField] private string clickActionName = "Attack";
-    [SerializeField] private string pointerActionName = "Look";
-    
-    private InputAction clickAction;
-    private InputAction pointerAction;
-    
-    public event Action OnClickStarted;
-    public event Action OnClickCanceled;
-    public event Action<Vector2> OnPointerMoved;
-    
-    public bool IsClicking { get; private set; }
-    public Vector2 PointerPosition => GetPointerPosition();
-    
+    public static InputManager Inst;
+
+    public InputFrame lastInput;
+
+    [SerializeField] bool clickHeld = false;
+
+    public string[] actions = {
+        "Click"
+     };
+    Dictionary<string, InputAction> actionMap = new Dictionary<string, InputAction>();
+
     private void Awake()
     {
-        SetupInputActions();
-    }
-    
-    private void SetupInputActions()
-    {
-        if (inputActions != null)
+        //Singleton boilerplate
+        if (Inst == null)
+            Inst = this;
+        else if (Inst != this)
+            Destroy(this);
+
+        //Initialize mapping to global actions (see ProjectSettings/Input in engine)
+        foreach (var action in actions)
         {
-            var actionMap = inputActions.FindActionMap(actionMapName);
-            if (actionMap != null)
-            {
-                clickAction = actionMap.FindAction(clickActionName);
-                pointerAction = actionMap.FindAction(pointerActionName);
-            }
-        }
-        
-        if (clickAction == null)
-        {
-            Debug.LogWarning("Click action not found, falling back to mouse input");
-        }
-        
-        if (pointerAction == null)
-        {
-            Debug.LogWarning("Pointer action not found, falling back to mouse input");
+            actionMap.Add(action, InputSystem.actions.FindAction(action));
         }
     }
-    
-    private void OnEnable()
+
+    private void Start()
     {
-        if (clickAction != null)
-        {
-            clickAction.performed += OnClickPerformed;
-            clickAction.canceled += OnClickCanceledInternal;
-            clickAction.Enable();
-        }
-        
-        if (pointerAction != null)
-        {
-            pointerAction.performed += OnPointerPerformed;
-            pointerAction.Enable();
-        }
+        lastInput = ProcessInput();
     }
-    
-    private void OnDisable()
+
+    private void Update()
     {
-        if (clickAction != null)
-        {
-            clickAction.performed -= OnClickPerformed;
-            clickAction.canceled -= OnClickCanceledInternal;
-            clickAction.Disable();
-        }
-        
-        if (pointerAction != null)
-        {
-            pointerAction.performed -= OnPointerPerformed;
-            pointerAction.Disable();
-        }
+        lastInput = ProcessInput();
     }
-    
-    private void OnClickPerformed(InputAction.CallbackContext context)
+
+    public InputFrame ProcessInput()
     {
-        IsClicking = true;
-        OnClickStarted?.Invoke();
+        Vector2 mousePos = actionMap["Look"].ReadValue<Vector2>();
+
+        bool clickDown = actionMap["Click"].WasPressedThisFrame();
+        bool clickUp = actionMap["Click"].WasReleasedThisFrame();
+        clickHeld = (clickHeld || clickDown) && !clickUp;
+
+        return new InputFrame(mousePos, clickDown, clickUp, clickHeld);
     }
-    
-    private void OnClickCanceledInternal(InputAction.CallbackContext context)
+}
+
+[System.Serializable]
+public struct InputFrame
+{
+    public Vector2 mousePos;
+    public bool clickDown;
+    public bool clickUp;
+    public bool clickHeld;
+
+    public InputFrame(Vector2 _mousePos, bool _clickDown, bool _clickUp, bool _clickHeld)
     {
-        IsClicking = false;
-        OnClickCanceled?.Invoke();
-    }
-    
-    private void OnPointerPerformed(InputAction.CallbackContext context)
-    {
-        Vector2 pointerPos = context.ReadValue<Vector2>();
-        OnPointerMoved?.Invoke(pointerPos);
-    }
-    
-    private Vector2 GetPointerPosition()
-    {
-        if (pointerAction != null)
-        {
-            return Mouse.current.position.ReadValue();
-        }
-        return Input.mousePosition;
-    }
-    
-    public Ray GetCameraRay(Camera camera)
-    {
-        return camera.ScreenPointToRay(PointerPosition);
+        mousePos = _mousePos;
+        clickDown = _clickDown;
+        clickUp = _clickUp;
+        clickHeld = _clickHeld;
     }
 }

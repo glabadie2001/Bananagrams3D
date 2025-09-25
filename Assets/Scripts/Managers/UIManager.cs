@@ -21,20 +21,20 @@ public class UIManager : MonoBehaviour
     /// </summary>
     public void DrawWords()
     {
-        GameManager.inst.board.Lock();
+        GameManager.Inst.board.Lock();
 
-        if (GameManager.inst == null || GameManager.inst.board == null)
+        if (GameManager.Inst == null || GameManager.Inst.board == null)
             throw new MissingReferenceException("Could not find the active board. Make sure there is a GameManager in the scene.");
 
         wordDisplay.text = "";
 
-        List<WordData> words = GameManager.inst.board.ScanForWords();
+        List<WordData> words = GameManager.Inst.board.ScanForWords();
         foreach (WordData word in words)
         {
             string append = $"{word.Text()} ({word.Score()})\n";;
             wordDisplay.text += append;
         }
 
-        wordDisplay.text += $"\n{GameManager.inst.board.Score()} total points";
+        wordDisplay.text += $"\n{GameManager.Inst.board.Score()} total points";
     }
 }

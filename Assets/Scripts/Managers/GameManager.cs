@@ -9,13 +9,15 @@ using UnityEngine;
 /// </summary>
 public class GameManager : MonoBehaviour
 {
-    public static GameManager inst;
+    public static GameManager Inst;
     
     [Header("Game Configuration")]
     public GameRules rules;
     public GameConfig configuration;
+    public LayerMask dragLayer;
 
     [Header("Game Systems")]
+    [SerializeField] Camera mainCam;
     [SerializeField] public Board board;
 
 
@@ -26,9 +28,9 @@ public class GameManager : MonoBehaviour
 
     void Awake()
     {
-        if (inst == null)
-            inst = this;
-        else if (inst != this)
+        if (Inst == null)
+            Inst = this;
+        else if (Inst != this)
             Destroy(this);
 
         // Initialize game state containers
@@ -43,6 +45,20 @@ public class GameManager : MonoBehaviour
     void Start()
     {
         InitializeGame();
+    }
+
+    private void Update()
+    {
+        InputFrame input = InputManager.Inst.ProcessInput();
+
+        if (input.clickDown)
+        {
+            Ray clickRay = mainCam.ScreenPointToRay(input.mousePos);
+            // TODO: Faster to do grid calculations? Probably unnecessary but worth considering.
+            if (Physics.Raycast(clickRay, out RaycastHit hitInfo, 100f, dragLayer)) {
+                hitInfo.transform.GetComponent<Tile>().
+            }
+        }
     }
 
     /// <summary>
