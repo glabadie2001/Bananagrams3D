@@ -1,20 +1,21 @@
-using System.Collections.Generic;
+using System;
+using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class InputManager : MonoBehaviour
+public class InputManager : SerializedMonoBehaviour, InputActions.IPlayerActions
 {
     public static InputManager Inst;
+    
+    [Header("Debug")]
+    public Vector2 mousePos;
+    
+    InputActions actions;
 
-    public InputFrame lastInput;
-
-    [SerializeField] bool clickHeld = false;
-
-    public string[] actions = {
-        "Click"
-     };
-    Dictionary<string, InputAction> actionMap = new Dictionary<string, InputAction>();
-
+    public event Action<InputAction.CallbackContext> OnLookEvent;
+    public event Action<InputAction.CallbackContext> OnSelectStartEvent;
+    public event Action<InputAction.CallbackContext> OnSelectEndEvent;
+    
     private void Awake()
     {
         //Singleton boilerplate
@@ -23,48 +24,26 @@ public class InputManager : MonoBehaviour
         else if (Inst != this)
             Destroy(this);
 
-        //Initialize mapping to global actions (see ProjectSettings/Input in engine)
-        foreach (var action in actions)
+        if (actions == null)
         {
-            actionMap.Add(action, InputSystem.actions.FindAction(action));
+            actions = new InputActions();
+            actions.Player.SetCallbacks(this);
         }
+
+        actions.Player.Enable();
     }
 
-    private void Start()
+    public void OnLook(InputAction.CallbackContext context)
     {
-        lastInput = ProcessInput();
+        mousePos = context.ReadValue<Vector2>();
+        OnLookEvent?.Invoke(context);
     }
 
-    private void Update()
+    public void OnSelect(InputAction.CallbackContext context)
     {
-        lastInput = ProcessInput();
-    }
-
-    public InputFrame ProcessInput()
-    {
-        Vector2 mousePos = actionMap["Look"].ReadValue<Vector2>();
-
-        bool clickDown = actionMap["Click"].WasPressedThisFrame();
-        bool clickUp = actionMap["Click"].WasReleasedThisFrame();
-        clickHeld = (clickHeld || clickDown) && !clickUp;
-
-        return new InputFrame(mousePos, clickDown, clickUp, clickHeld);
-    }
-}
-
-[System.Serializable]
-public struct InputFrame
-{
-    public Vector2 mousePos;
-    public bool clickDown;
-    public bool clickUp;
-    public bool clickHeld;
-
-    public InputFrame(Vector2 _mousePos, bool _clickDown, bool _clickUp, bool _clickHeld)
-    {
-        mousePos = _mousePos;
-        clickDown = _clickDown;
-        clickUp = _clickUp;
-        clickHeld = _clickHeld;
+        if (context.started)
+            OnSelectStartEvent?.Invoke(context);
+        else if (context.canceled)
+            OnSelectEndEvent?.Invoke(context);
     }
 }

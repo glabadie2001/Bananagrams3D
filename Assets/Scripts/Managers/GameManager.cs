@@ -20,12 +20,16 @@ public class GameManager : MonoBehaviour
     [SerializeField] Camera mainCam;
     [SerializeField] public Board board;
 
+    [Header("Game Feel")]
+    [SerializeField] private float dragSpeed = 1;
 
     [Header("Game State")]
     [SerializeField] private Bag<LetterData> reserve;
     [SerializeField] private List<LetterData> discard;
     [SerializeField] public LinearGameZone<LetterData> hand;
-
+    [SerializeField] private Tile currentTile;
+    [SerializeField] private Vector3 lastTilePos;
+    
     void Awake()
     {
         if (Inst == null)
@@ -45,19 +49,32 @@ public class GameManager : MonoBehaviour
     void Start()
     {
         InitializeGame();
+
+        InputManager.Inst.OnSelectStartEvent += (ctx) =>
+        {
+            Ray clickRay = mainCam.ScreenPointToRay(InputManager.Inst.mousePos);
+            // TODO: Faster to do grid calculations? Probably unnecessary but worth considering.
+            if (Physics.Raycast(clickRay, out RaycastHit hitInfo, 100f, dragLayer))
+            {
+                lastTilePos = hitInfo.transform.position;
+                currentTile = hitInfo.transform.GetComponent<Tile>();
+            }
+        };
+
+        InputManager.Inst.OnSelectEndEvent += (ctx) =>
+        {
+            currentTile.transform.position = lastTilePos;
+            currentTile = null;
+        };
     }
 
     private void Update()
     {
-        InputFrame input = InputManager.Inst.ProcessInput();
-
-        if (input.clickDown)
+        if (currentTile != null)
         {
-            Ray clickRay = mainCam.ScreenPointToRay(input.mousePos);
-            // TODO: Faster to do grid calculations? Probably unnecessary but worth considering.
-            if (Physics.Raycast(clickRay, out RaycastHit hitInfo, 100f, dragLayer)) {
-                hitInfo.transform.GetComponent<Tile>().
-            }
+            Vector3 target = mainCam.ScreenToWorldPoint(InputManager.Inst.mousePos);
+            target.y = configuration.dragHeight;
+            currentTile.transform.position = Vector3.Lerp(currentTile.transform.position, target, dragSpeed * Time.deltaTime);
         }
     }
 

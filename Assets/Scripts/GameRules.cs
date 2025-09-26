@@ -41,63 +41,6 @@ public class GameRules : ScriptableObject
 }
 
 [System.Serializable]
-public class LetterData
-{
-    public string name;
-    public int baseValue;
-    public Material baseMat;
-    public bool locked;
-
-    public LetterData(string _text, int _baseValue, Material _baseMat, bool _locked)
-    {
-        name = _text;
-        baseValue = _baseValue;
-        baseMat = _baseMat;
-        locked = _locked;
-    }
-
-    public float Score()
-    {
-        return baseValue;
-    }
-
-    public void Lock()
-    {
-        locked = true;
-        Debug.Log($"{name} locked");
-    }
-}
-
-public struct WordData
-{
-    public LetterData[] chars;
-
-    // TODO: This might be the slowest shit ever, and probably unnecessary. Eat the overhead of a List if it becomes an issue
-    public WordData(IEnumerable<LetterData> _chars)
-    {
-        chars = _chars.ToArray();
-    }
-
-    public float Score()
-    {
-        float total = 0;
-        foreach (LetterData c in chars)
-            total += c.Score();
-
-        return total;
-    }
-
-    public string Text()
-    {
-        string txt = "";
-        foreach (LetterData c in chars)
-            txt += c.name;
-        
-        return txt;
-    }
-}
-
-[System.Serializable]
 public struct BagLetterEntry
 {
     [ValueDropdown("@UnityEngine.Resources.FindObjectsOfTypeAll<GameRules>()[0].GetLetterIndexOptions()")]

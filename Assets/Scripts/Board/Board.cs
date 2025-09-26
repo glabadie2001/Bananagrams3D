@@ -63,7 +63,7 @@ public class Board : GridGameZone<LetterData>
         Vector2Int gridPos = WorldToGridPosition(worldPosition);
         
         if (IsValidGridPosition(gridPos) &&
-            (this[gridPos.x, gridPos.y].name == null || this[gridPos.x, gridPos.y].name == string.Empty))
+            string.IsNullOrEmpty(this[gridPos.x, gridPos.y].name))
         {
             Debug.Log(letter.name);
             this[gridPos.x, gridPos.y] = letter;

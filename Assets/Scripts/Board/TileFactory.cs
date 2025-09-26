@@ -31,7 +31,6 @@ public static class TileFactory
         tile.SetLocation(location);
         
         ApplyLetterVisuals(tileObj, letter);
-        ConfigureTileInteraction(tile);
         
         return tileObj;
     }
@@ -57,22 +56,6 @@ public static class TileFactory
         var renderer = tileObj.GetComponent<MeshRenderer>();
         if (renderer && letter.baseMat != null)
             renderer.material = letter.baseMat;
-    }
-    
-    private static void ConfigureTileInteraction(Tile tile)
-    {
-        tile.OnTilePlaced += (t, pos) => Debug.Log($"Tile fallback: {t.Letter.name} placed");
-        tile.OnTileReturned += (t) => Debug.Log($"Tile fallback: {t.Letter.name} returned");
-        //var dragController = Object.FindFirstObjectByType<DragDropController>();
-        //if (dragController != null)
-        //{
-        //    tile.enabled = false;
-        //}
-        //else
-        //{
-        //    tile.OnTilePlaced += (t, pos) => Debug.Log($"Tile fallback: {t.Letter.name} placed");
-        //    tile.OnTileReturned += (t) => Debug.Log($"Tile fallback: {t.Letter.name} returned");
-        //}
     }
 
     public static void DestroyTile(GameObject tileObj)

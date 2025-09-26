@@ -35,13 +35,8 @@ public class Tile : MonoBehaviour
     /// <summary>
     /// Current location context of this tile
     /// </summary>
-    public TileLocation Location { get; set; } = TileLocation.Hand;
+    public TileLocation Location { get; private set; } = TileLocation.Hand;
     
-    // Events for decoupled communication with managers
-    public event System.Action<Tile> OnTileSelected;
-    public event System.Action<Tile, Vector3> OnTilePlaced;
-    public event System.Action<Tile> OnTileReturned;
-
     private void Awake()
     {
         // Cache components for performance
