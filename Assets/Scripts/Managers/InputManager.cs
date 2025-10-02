@@ -13,6 +13,7 @@ public class InputManager : SerializedMonoBehaviour, InputActions.IPlayerActions
     InputActions actions;
 
     public event Action<InputAction.CallbackContext> OnLookEvent;
+    
     public event Action<InputAction.CallbackContext> OnSelectStartEvent;
     public event Action<InputAction.CallbackContext> OnSelectEndEvent;
     

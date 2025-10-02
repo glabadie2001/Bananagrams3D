@@ -28,7 +28,7 @@ public class LinearGameZone<T> : GameZone<T>
         Renderer.Render(this);
     }
 
-    public void Add(T item)
+    public override void Add(T item)
     {
         if (Count >= Capacity)
         {
@@ -38,7 +38,7 @@ public class LinearGameZone<T> : GameZone<T>
         contents.Add(item);
     }
 
-    public bool Remove(T item) => contents.Remove(item);
+    public override bool Remove(T item) => contents.Remove(item);
 
     public void RemoveAt(int index) => contents.RemoveAt(index);
 

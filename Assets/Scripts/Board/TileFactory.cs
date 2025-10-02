@@ -10,7 +10,7 @@ public static class TileFactory
     /// Creates a unified tile object with specified location and properties.
     /// Central method for all tile creation - prefer using specific methods below.
     /// </summary>
-    public static GameObject CreateTile(LetterData letter, GameObject prefab, Transform parent, Vector3 position, TileLocation location, Camera camera = null)
+    public static GameObject CreateTile(LetterData letter, GameObject prefab, Transform parent, Vector3 position)
     {
         if (prefab == null)
         {
@@ -28,27 +28,11 @@ public static class TileFactory
         
         tile.Initialize(letter);
         tile.SetOriginalPosition(position);
-        tile.SetLocation(location);
+        //tile.Letter.SetOwner(location);
         
         ApplyLetterVisuals(tileObj, letter);
         
         return tileObj;
-    }
-    
-    /// <summary>
-    /// Creates a tile for hand display with proper hand-specific configuration.
-    /// </summary>
-    public static GameObject CreateHandTile(LetterData letter, GameObject prefab, Transform parent, Vector3 position, Camera camera = null)
-    {
-        return CreateTile(letter, prefab, parent, position, TileLocation.Hand, camera);
-    }
-    
-    /// <summary>
-    /// Creates a tile for board placement with proper board-specific configuration.
-    /// </summary>
-    public static GameObject CreateBoardTile(LetterData letter, GameObject prefab, Transform parent, Vector3 position)
-    {
-        return CreateTile(letter, prefab, parent, position, TileLocation.Board);
     }
     
     private static void ApplyLetterVisuals(GameObject tileObj, LetterData letter)

@@ -38,7 +38,7 @@ public class HandRenderer : ScriptableObject, IZoneRenderer<LetterData>
     private void CreateHandTile(LetterData letter, int index)
     {
         Vector3 position = GridSystem.CalculateHandPosition(index, handBounds, tileSpacing, 1f, tilesPerRow);
-        GameObject tileObj = TileFactory.CreateHandTile(letter, handTilePrefab, handContainer, position);
+        GameObject tileObj = TileFactory.CreateTile(letter, handTilePrefab, handContainer, position);
     }
 
     private void DestroyHandTile(Tile tile)

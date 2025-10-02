@@ -45,7 +45,7 @@ public class BoardRenderer : ScriptableObject, IGridZoneRenderer<LetterData>
         );
 
         // 4. Create the tile using the correctly calculated position and your vertical offset.
-        GameObject tileObj = TileFactory.CreateBoardTile(letter, tilePrefab, handContainer, centeredPosition + Vector3.up * zOffset);
+        GameObject tileObj = TileFactory.CreateTile(letter, tilePrefab, handContainer, centeredPosition + Vector3.up * zOffset);
 
         if (letter.locked)
             tileObj.GetComponent<MeshRenderer>().material.color = lockedTileColor;
@@ -102,7 +102,7 @@ public class BoardRenderer : ScriptableObject, IGridZoneRenderer<LetterData>
         {
             for (int y = 0; y < height; y++)
             {
-                if (grid[x, y].name == null) continue;
+                if (grid[x, y] == null || grid[x,y].name == null) continue;
 
                 CreateBoardTile(grid[x, y], x, y, width, height);
             }

@@ -16,18 +16,18 @@ public abstract class GameZone<T> : IEnumerable<T>
 
     public IZoneRenderer<T> Renderer => rendererAsset as IZoneRenderer<T>;
 
-    // Abstract properties that derived classes must implement
     public abstract int Count { get; }
     public abstract int Capacity { get; }
 
-    // Core operations that derived classes must implement
+    public abstract void Add(T item);
+    public abstract bool Remove(T item);
     public abstract void Clear();
     public abstract bool Contains(T item);
     public abstract IEnumerator<T> GetEnumerator();
 
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-    public void SetRendererAsset(ScriptableObject asset)
+    public virtual void SetRendererAsset(ScriptableObject asset)
     {
         if (asset == null || asset is IZoneRenderer<T>)
         {
@@ -54,7 +54,7 @@ public abstract class GameZone<T> : IEnumerable<T>
     [ShowIf("@Renderer == null")]
     public bool ShowRendererWarning => true;
 
-    protected bool ValidateRenderer()
+    protected virtual bool ValidateRenderer()
     {
         if (rendererAsset == null) return true;
         return rendererAsset is IZoneRenderer<T>;

@@ -1,16 +1,6 @@
 using UnityEngine;
 
 /// <summary>
-/// Represents the current location context of a tile.
-/// Extensible for future game modes (e.g., Deck, Discard, etc.)
-/// </summary>
-public enum TileLocation
-{
-    Hand,
-    Board
-}
-
-/// <summary>
 /// Unified tile component that can exist in any game location.
 /// Handles visual state, hover effects, and basic tile behavior.
 /// Location-specific logic is handled by managers, not the tile itself.
@@ -31,11 +21,6 @@ public class Tile : MonoBehaviour
     /// The letter this tile represents
     /// </summary>
     public LetterData Letter => letterData;
-    
-    /// <summary>
-    /// Current location context of this tile
-    /// </summary>
-    public TileLocation Location { get; private set; } = TileLocation.Hand;
     
     private void Awake()
     {
@@ -63,33 +48,23 @@ public class Tile : MonoBehaviour
             meshRenderer.material = letter.baseMat;
     }
 
-    private void OnMouseEnter()
+    public void Move(GameZone<LetterData> target)
     {
-        if (!isHovering)
-        {
-            StartHover();
-        }
+        letterData.owner.Remove(letterData);
+        target.Add(letterData);
+        letterData.owner = target;
+    }
+    
+    public void Swap(Tile target)
+    {
+        GameZone<LetterData> targetDst = target.letterData.owner;
+        target.Move(letterData.owner);
+        Move(targetDst);
     }
 
-    private void OnMouseExit()
+    public void Remove()
     {
-        if (isHovering)
-        {
-            EndHover();
-        }
-    }
-
-    private void StartHover()
-    {
-        isHovering = true;
-        float hoverHeight = GameConstants.Visual.HOVER_HEIGHT;
-        transform.position = originalPosition + Vector3.up * hoverHeight;
-    }
-
-    private void EndHover()
-    {
-        isHovering = false;
-        transform.position = originalPosition;
+        letterData.owner.Remove(letterData);
     }
 
     /// <summary>
@@ -112,14 +87,5 @@ public class Tile : MonoBehaviour
         this.enabled = enabled;
         if (col != null)
             col.enabled = enabled;
-    }
-
-    /// <summary>
-    /// Updates the tile's location context.
-    /// Used by managers to track where tiles belong.
-    /// </summary>
-    public void SetLocation(TileLocation location)
-    {
-        Location = location;
     }
 }

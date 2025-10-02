@@ -1,3 +1,4 @@
+using System;
 using Sirenix.OdinInspector;
 using System.Collections.Generic;
 using UnityEngine;
@@ -15,7 +16,8 @@ public class GridGameZone<T> : GameZone<T>, IReadOnlyGrid<T>
     [SerializeField]
     private int height;
 
-    [SerializeField, ReadOnly, ShowInInspector]
+
+    [NonSerialized]
     protected T[] contents; // Flattened array for serialization
 
     public override int Count
@@ -27,8 +29,10 @@ public class GridGameZone<T> : GameZone<T>, IReadOnlyGrid<T>
             {
                 foreach (var item in contents)
                 {
-                    if (item != null && !EqualityComparer<T>.Default.Equals(item, default(T)))
-                        count++;
+                    Debug.Log(item);
+                    count++;
+                    //if (item != null && !EqualityComparer<T>.Default.Equals(item, default(T)))
+                    //    count++;
                 }
             }
             return count;
@@ -36,8 +40,50 @@ public class GridGameZone<T> : GameZone<T>, IReadOnlyGrid<T>
     }
 
     public override int Capacity => width * height;
+    public override void Add(T item)
+    {
+        throw new System.NotImplementedException();
+    }
+
+    public override bool Remove(T item)
+    {
+        if (contents == null) return false;
+
+        for (int i = 0; i < contents.Length; i++)
+        {
+            if (contents[i] == null || !contents[i].Equals(item)) continue;
+            contents[i] = default(T);
+            return true;
+        }
+
+        return false;
+    }
+
     public int Width => width;
     public int Height => height;
+
+    // Override to enforce IGridZoneRenderer<T> requirement
+    public new IGridZoneRenderer<T> Renderer => rendererAsset as IGridZoneRenderer<T>;
+
+    // Override validation to require IGridZoneRenderer<T>
+    protected override bool ValidateRenderer()
+    {
+        if (rendererAsset == null) return true;
+        return rendererAsset is IGridZoneRenderer<T>;
+    }
+
+    // Override to enforce IGridZoneRenderer<T> requirement
+    public override void SetRendererAsset(ScriptableObject asset)
+    {
+        if (asset == null || asset is IGridZoneRenderer<T>)
+        {
+            rendererAsset = asset;
+        }
+        else
+        {
+            Debug.LogError($"Asset {asset.name} does not implement IGridZoneRenderer<{typeof(T).Name}>");
+        }
+    }
 
     public GridGameZone() { }
 
@@ -59,12 +105,12 @@ public class GridGameZone<T> : GameZone<T>, IReadOnlyGrid<T>
         get
         {
             ValidateIndices(row, col);
-            return contents[row * width + col];
+            return this[row * width + col];
         }
         set
         {
             ValidateIndices(row, col);
-            contents[row * width + col] = value;
+            this[row * width + col] = value;
         }
     }
 
@@ -138,16 +184,8 @@ public class GridGameZone<T> : GameZone<T>, IReadOnlyGrid<T>
 
     protected override void RenderContents()
     {
-        if (Renderer is IGridZoneRenderer<T> gridRenderer)
-        {
-            // If the renderer understands grids, pass the grid data
-            gridRenderer.RenderGrid(this, width, height);
-        }
-        else if (Renderer != null)
-        {
-            // Fall back to linear rendering
-            Renderer.Render(this);
-        }
+        // Renderer is guaranteed to be IGridZoneRenderer<T> or null
+        Renderer?.RenderGrid(this, width, height);
     }
 
     [Button("Resize Grid")]

@@ -13,6 +13,8 @@ MonoBehaviour:
   m_Name: BoardRenderer
   m_EditorClassIdentifier: 
   tilePrefab: {fileID: 2727955367877423791, guid: 6f612ed86ac799647840f3c33b9f4547, type: 3}
+  tileColor: {r: 1, g: 0.8901961, b: 0.7254902, a: 1}
+  lockedTileColor: {r: 0.823, g: 0.6853944, b: 0.47898602, a: 1}
   boardBounds:
     serializedVersion: 2
     x: -1.75

@@ -1,5 +1,6 @@
 using Sirenix.OdinInspector;
 using System.Collections.Generic;
+using System.Net;
 using UnityEngine;
 
 /// <summary>
@@ -53,29 +54,85 @@ public class GameManager : MonoBehaviour
         InputManager.Inst.OnSelectStartEvent += (ctx) =>
         {
             Ray clickRay = mainCam.ScreenPointToRay(InputManager.Inst.mousePos);
+            
             // TODO: Faster to do grid calculations? Probably unnecessary but worth considering.
-            if (Physics.Raycast(clickRay, out RaycastHit hitInfo, 100f, dragLayer))
-            {
-                lastTilePos = hitInfo.transform.position;
-                currentTile = hitInfo.transform.GetComponent<Tile>();
-            }
+            if (!Physics.Raycast(clickRay, out RaycastHit hitInfo, 100f, dragLayer)) return;
+            
+            lastTilePos = hitInfo.transform.position;
+            currentTile = hitInfo.transform.GetComponent<Tile>();
+
+            if (!currentTile.Letter.locked) return;
+
+            currentTile = null;
         };
 
         InputManager.Inst.OnSelectEndEvent += (ctx) =>
         {
-            currentTile.transform.position = lastTilePos;
+            if (currentTile == null) return;
+            
+            Vector3 worldMouse = mainCam.ScreenToWorldPoint(InputManager.Inst.mousePos);
+            
+            // Anywhere -> Board
+            if (board.IsWithinBounds(worldMouse))
+            {
+                if (currentTile.Letter.owner == hand)
+                {
+                    hand.Remove(currentTile.Letter);
+                    hand.Draw();
+                    currentTile.Letter.SetOwner(board);
+                }
+                else if (currentTile.Letter.owner == board)
+                {
+                    board.Remove(currentTile.Letter);
+                }
+
+                board.PlaceTile(currentTile.Letter, board.SnapToGrid(worldMouse));
+                board.Draw();
+            }
+            // Board -> Hand
+            else if (currentTile.Letter.owner == board && hand.IsWithinBounds(worldMouse))
+            {
+                hand.Add(currentTile.Letter);
+                hand.Draw();
+                board.Remove(currentTile.Letter);
+                board.Draw();
+                currentTile.Letter.SetOwner(hand);
+            }
+            // Fallback
+            else {
+                currentTile.transform.position = lastTilePos;
+            }
+            
             currentTile = null;
         };
+
+        Debug.Log(board.Count);
     }
 
     private void Update()
     {
         if (currentTile != null)
         {
-            Vector3 target = mainCam.ScreenToWorldPoint(InputManager.Inst.mousePos);
-            target.y = configuration.dragHeight;
-            currentTile.transform.position = Vector3.Lerp(currentTile.transform.position, target, dragSpeed * Time.deltaTime);
+            MoveCurrentTile(currentTile.transform);
         }
+    }
+
+    private void MoveCurrentTile(Transform tile)
+    {
+        Vector3 target;
+        Vector3 worldMouse = mainCam.ScreenToWorldPoint(InputManager.Inst.mousePos);
+
+        if (board.IsWithinBounds(worldMouse))
+        {
+            target = board.SnapToGrid(worldMouse);
+        }
+        else
+        {
+            target = worldMouse;
+            target.y = configuration.dragHeight;
+        }
+            
+        tile.position = Vector3.Lerp(tile.position, target, dragSpeed * Time.deltaTime);
     }
 
     /// <summary>
@@ -112,7 +169,7 @@ public class GameManager : MonoBehaviour
         while (hand.Count < hand.Capacity && reserve.Count > 0)
         {
             var letter = reserve.Pull();
-            hand.Add(letter);
+            hand.Add(new LetterData(letter, hand));
         }
 
         hand.Renderer.Render(hand);
@@ -128,60 +185,6 @@ public class GameManager : MonoBehaviour
         }
 
         hand.Renderer.Render(hand);
-    }
-    
-    /// <summary>
-    /// Attempts to place an existing tile object on the board.
-    /// Handles state transitions and manager updates without creating new objects.
-    /// </summary>
-    /// <param name="tile">The tile object to place</param>
-    /// <param name="boardPosition">World position on board</param>
-    /// <returns>True if placement was successful</returns>
-    public bool TryPlaceTileObject(Tile tile, Vector3 boardPosition)
-    {
-        // Try to place on board (data only, since we're moving existing object)
-        if (board.PlaceTileDataOnly(tile.Letter, boardPosition))
-        {
-            // Remove from hand data if it was in hand
-            if (tile.Location == TileLocation.Hand)
-            {
-                hand.Remove(tile.Letter);
-                
-                hand.Renderer.Render(hand);
-            }
-            
-            return true;
-        }
-        return false;
-    }
-
-    public bool TryPlaceBoardTileAt(LetterData letter, Vector3 boardPosition)
-    {
-        // Try to place board tile at new position (don't create new visual - tile already exists)
-        return board.PlaceTileDataOnly(letter, boardPosition);
-    }
-
-    public void RemoveTileFromBoard(Tile tile, Vector3 position)
-    {
-        // Remove tile from board state when starting to drag
-        board.RemoveTileAt(position);
-    }
-
-    public void RestoreBoardTileAt(LetterData letter, Vector3 position)
-    {
-        // Put tile back in board state at original position
-        board.PlaceTileDataOnly(letter, position);
-    }
-
-    public void ReturnTileToHand(Tile tile)
-    {
-        // Add the tile back to hand when dragged to hand area
-        hand.Add(tile.Letter);
-        
-        hand.Renderer.Render(hand);
-        
-        // Update tile location
-        tile.SetLocation(TileLocation.Hand);
     }
 
     private void OnDrawGizmos()

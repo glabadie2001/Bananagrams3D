@@ -15,13 +15,16 @@ public class Board : GridGameZone<LetterData>
     public void Initialize(GameRules gameRules)
     {
         rules = gameRules;
-        contents = new LetterData[Width * Height];
+
+        // Let the base class properly initialize the contents array
+        Initialize(Width, Height);
+
         Renderer.Initialize(container);
     }
 
     public void Draw()
     {
-        ((IGridZoneRenderer<LetterData>)Renderer).RenderGrid(this, Width, Height);
+        Renderer.RenderGrid(this, Width, Height);
     }
     
     private Vector2Int WorldToGridPosition(Vector3 worldPos)
@@ -52,30 +55,26 @@ public class Board : GridGameZone<LetterData>
     }
 
     /// <summary>
-    /// Places tile data only without creating visual representation.
+    /// Places tile and repaints the board.
     /// Use this when moving existing tile objects to new positions.
     /// </summary>
     /// <param name="letter">Letter data to place</param>
     /// <param name="worldPosition">World position for placement</param>
     /// <returns>True if placement was successful</returns>
-    public bool PlaceTileDataOnly(LetterData letter, Vector3 worldPosition)
+    public bool PlaceTile(LetterData letter, Vector3 worldPosition)
     {
         Vector2Int gridPos = WorldToGridPosition(worldPosition);
         
-        if (IsValidGridPosition(gridPos) &&
-            string.IsNullOrEmpty(this[gridPos.x, gridPos.y].name))
-        {
-            Debug.Log(letter.name);
-            this[gridPos.x, gridPos.y] = letter;
-            return true;
-        }
+        if (!IsValidGridPosition(gridPos) || this[gridPos.x, gridPos.y] != null) return false;
+
+        this[gridPos.x, gridPos.y] = new LetterData(letter, this);
         
-        return false;
+        return true;
     }
 
     private void ProcessTileForWord(LetterData tile, List<LetterData> currWord, List<WordData> words)
     {
-        if (tile.name == null)
+        if (tile == null)
         {
             if (currWord.Count >= rules.minWordLength) words.Add(new WordData(currWord));
             currWord.Clear();
@@ -135,9 +134,7 @@ public class Board : GridGameZone<LetterData>
         {
             total += word.Score();
         }
-
-        Debug.Log(total);
-
+        
         return total;
     }
 
@@ -145,6 +142,7 @@ public class Board : GridGameZone<LetterData>
     {
         foreach(LetterData l in contents)
         {
+            if (l == null) continue;
             l.Lock();
         }
         Draw();
