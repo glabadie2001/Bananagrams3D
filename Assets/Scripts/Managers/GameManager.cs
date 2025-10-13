@@ -26,10 +26,9 @@ public class GameManager : MonoBehaviour
 
     [Header("Game State")]
     [SerializeField] private Bag<LetterData> reserve;
-    [SerializeField] private List<LetterData> discard;
-    [SerializeField] public LinearGameZone<LetterData> hand;
+    [SerializeField] private List<LetterInstance> discard;
+    [SerializeField] public LinearGameZone<LetterInstance> hand;
     [SerializeField] private Tile currentTile;
-    [SerializeField] private Vector3 lastTilePos;
     
     void Awake()
     {
@@ -40,7 +39,7 @@ public class GameManager : MonoBehaviour
 
         // Initialize game state containers
         reserve = new Bag<LetterData>();
-        discard = new List<LetterData>();
+        discard = new List<LetterInstance>();
         
         // Initialize constants system if configuration is assigned
         if (configuration != null)
@@ -51,6 +50,7 @@ public class GameManager : MonoBehaviour
     {
         InitializeGame();
 
+        // OnSelectStart binding for tile movement
         InputManager.Inst.OnSelectStartEvent += (ctx) =>
         {
             Ray clickRay = mainCam.ScreenPointToRay(InputManager.Inst.mousePos);
@@ -58,81 +58,81 @@ public class GameManager : MonoBehaviour
             // TODO: Faster to do grid calculations? Probably unnecessary but worth considering.
             if (!Physics.Raycast(clickRay, out RaycastHit hitInfo, 100f, dragLayer)) return;
             
-            lastTilePos = hitInfo.transform.position;
-            currentTile = hitInfo.transform.GetComponent<Tile>();
+            IDraggable dragTarget = hitInfo.transform.GetComponent<IDraggable>();
 
-            if (!currentTile.Letter.locked) return;
-
-            currentTile = null;
+            if (dragTarget.GetType() == typeof(Tile))
+            {
+                currentTile = dragTarget as Tile;
+                if (currentTile != null && currentTile.Letter.locked)
+                {
+                    currentTile = null;
+                    return;
+                }
+            }
+            EventManager.Inst.Enqueue(new DragStartEvent(dragTarget, dragSpeed));
         };
 
         InputManager.Inst.OnSelectEndEvent += (ctx) =>
         {
             if (currentTile == null) return;
-            
+
             Vector3 worldMouse = mainCam.ScreenToWorldPoint(InputManager.Inst.mousePos);
             
             // Anywhere -> Board
             if (board.IsWithinBounds(worldMouse))
             {
-                if (currentTile.Letter.owner == hand)
-                {
-                    hand.Remove(currentTile.Letter);
-                    hand.Draw();
-                    currentTile.Letter.SetOwner(board);
-                }
-                else if (currentTile.Letter.owner == board)
-                {
-                    board.Remove(currentTile.Letter);
-                }
-
-                board.PlaceTile(currentTile.Letter, board.SnapToGrid(worldMouse));
-                board.Draw();
+                Vector2Int tileIndex = board.WorldToIndex(worldMouse);
+                if (TryPlaceOnBoard(tileIndex)) return;
             }
             // Board -> Hand
             else if (currentTile.Letter.owner == board && hand.IsWithinBounds(worldMouse))
             {
-                hand.Add(currentTile.Letter);
-                hand.Draw();
-                board.Remove(currentTile.Letter);
-                board.Draw();
-                currentTile.Letter.SetOwner(hand);
+                // For hand, we can add to the end (hand doesn't have specific index positioning)
+                // Or we could calculate a hand index based on mouse position if needed
+                int handIndex = hand.Count; // Add to end for now
+
+                if (SwapBetweenZones(currentTile.Letter, board, hand, handIndex))
+                {
+                    // Swap successful, zones already refreshed
+                }
+                else
+                {
+                    // Swap failed, restore tile position
+                    currentTile.RestoreOriginalPosition();
+                }
             }
             // Fallback
-            else {
-                currentTile.transform.position = lastTilePos;
+            else
+            {
+                currentTile.RestoreOriginalPosition();
             }
             
             currentTile = null;
         };
-
-        Debug.Log(board.Count);
     }
 
-    private void Update()
+    private bool TryPlaceOnBoard(Vector2Int tileIndex)
     {
-        if (currentTile != null)
-        {
-            MoveCurrentTile(currentTile.transform);
-        }
-    }
+        LetterInstance target = board[tileIndex.x, tileIndex.y];
 
-    private void MoveCurrentTile(Transform tile)
-    {
-        Vector3 target;
-        Vector3 worldMouse = mainCam.ScreenToWorldPoint(InputManager.Inst.mousePos);
+        if (target is { locked: true })
+        {
+            currentTile.RestoreOriginalPosition();
+            return false;
+        }
+                
+        // Calculate target board index
+        int targetIndex = board.GetIndex(tileIndex.x, tileIndex.y);
+                
+        // Use SwapBetweenZones to handle the move/swap
+        // OnSwappedTo will be called automatically to update owner
+        if (!SwapBetweenZones(currentTile.Letter, currentTile.Letter.owner, board, targetIndex))
+        {
+            // Swap failed, restore tile position
+            currentTile.RestoreOriginalPosition();
+        }
 
-        if (board.IsWithinBounds(worldMouse))
-        {
-            target = board.SnapToGrid(worldMouse);
-        }
-        else
-        {
-            target = worldMouse;
-            target.y = configuration.dragHeight;
-        }
-            
-        tile.position = Vector3.Lerp(tile.position, target, dragSpeed * Time.deltaTime);
+        return false;
     }
 
     /// <summary>
@@ -168,8 +168,9 @@ public class GameManager : MonoBehaviour
     {
         while (hand.Count < hand.Capacity && reserve.Count > 0)
         {
-            var letter = reserve.Pull();
-            hand.Add(new LetterData(letter, hand));
+            var letterData = reserve.Pull();
+            var letterInstance = new LetterInstance(letterData, hand);
+            hand.Add(letterInstance);
         }
 
         hand.Renderer.Render(hand);
@@ -185,6 +186,107 @@ public class GameManager : MonoBehaviour
         }
 
         hand.Renderer.Render(hand);
+    }
+
+    /// <summary>
+    /// Swaps a source item between two different GameZones, or moves if target position is empty.
+    /// Handles cross-zone item movement with optional swap behavior.
+    /// Generic method that works with any GameZone type.
+    /// Automatically calls OnSwappedTo for items implementing ISwappable.
+    /// </summary>
+    /// <typeparam name="T">The type of items in the zones (must implement ISwappable)</typeparam>
+    /// <param name="sourceItem">The item being moved</param>
+    /// <param name="sourceZone">The zone the item is currently in</param>
+    /// <param name="targetZone">The zone to move the item to</param>
+    /// <param name="targetIndex">The target index in the target zone</param>
+    /// <returns>True if the swap/move was successful</returns>
+    public static bool SwapBetweenZones<T>(T sourceItem, GameZone<T> sourceZone, GameZone<T> targetZone, int targetIndex)
+        where T : ISwappable<T>
+    {
+        if (EqualityComparer<T>.Default.Equals(sourceItem, default(T)) || sourceZone == null || targetZone == null)
+        {
+            Debug.LogWarning("SwapBetweenZones: Source item, source zone, or target zone is null/invalid");
+            return false;
+        }
+
+        int sourceIndex = sourceZone.GetIndexOf(sourceItem);
+        if (sourceIndex < 0)
+        {
+            Debug.LogWarning($"SwapBetweenZones: Source item not found in source zone. {sourceItem} - {sourceIndex}");
+            return false;
+        }
+
+        // Optimization: If both zones are the same, use the simpler within-zone swap
+        if (sourceZone == targetZone)
+        {
+            bool success = sourceZone.SwapByIndex(sourceIndex, targetIndex);
+            if (success)
+            {
+                sourceZone.RefreshDisplay();
+            }
+            return success;
+        }
+
+        // Try to get target item (may be null/default)
+        T targetItem = targetZone.TryGetItemAt(targetIndex);
+
+        // Remove source item from its zone
+        if (!sourceZone.Remove(sourceItem))
+        {
+            Debug.LogWarning("SwapBetweenZones: Failed to remove source item from source zone");
+            return false;
+        }
+
+        // If target item exists, remove it from target zone
+        bool hasTargetItem = !EqualityComparer<T>.Default.Equals(targetItem, default(T));
+        if (hasTargetItem)
+        {
+            if (!targetZone.Remove(targetItem))
+            {
+                // Rollback: re-add source item to source zone
+                sourceZone.Add(sourceItem);
+                Debug.LogWarning("SwapBetweenZones: Failed to remove target item from target zone");
+                return false;
+            }
+        }
+
+        // Place source item at target position
+        // For GridGameZone, we need to use indexer assignment
+        if (targetZone is GridGameZone<T> gridZone)
+        {
+            gridZone[targetIndex] = sourceItem;
+        }
+        // For LinearGameZone, we need to insert at specific position
+        // TODO: Squash this into a single operation?
+        else if (targetZone is LinearGameZone<T> linearZone)
+        {
+            linearZone.Add(sourceItem);
+        }
+
+        // Notify source item of its new zone
+        sourceItem.OnSwappedTo(targetZone);
+
+        // If there was a target item, place it at source's original position
+        if (hasTargetItem)
+        {
+            if (sourceZone is GridGameZone<T> srcGridZone)
+            {
+                srcGridZone[sourceIndex] = targetItem;
+            }
+            else if (sourceZone is LinearGameZone<T> srcLinearZone)
+            {
+                srcLinearZone.Add(targetItem);
+            }
+
+            // Notify target item of its new zone
+            targetItem.OnSwappedTo(sourceZone);
+        }
+
+        // Refresh displays
+        sourceZone.RefreshDisplay();
+        targetZone.RefreshDisplay();
+
+        return true;
     }
 
     private void OnDrawGizmos()

@@ -3,7 +3,7 @@ using UnityEngine;
 using Sirenix.OdinInspector;
 
 [System.Serializable, CreateAssetMenu(menuName = "Bananagrams/Renderer/Board Renderer")]
-public class BoardRenderer : ScriptableObject, IGridZoneRenderer<LetterData>
+public class BoardRenderer : ScriptableObject, IGridZoneRenderer<LetterInstance>
 {
     [Header("Display Settings")]
     private Transform handContainer;
@@ -23,11 +23,11 @@ public class BoardRenderer : ScriptableObject, IGridZoneRenderer<LetterData>
         handContainer = container;
     }
 
-    public void Render(IEnumerable<LetterData> letters) {
+    public void Render(IEnumerable<LetterInstance> letters) {
         throw new System.NotImplementedException();
     }
 
-    private void CreateBoardTile(LetterData letter, int x, int y, int width, int height)
+    private void CreateBoardTile(LetterInstance letter, int x, int y, int width, int height)
     {
         // 1. Calculate the size of a single cell based on the total bounds and grid dimensions.
         float cellWidth = boardBounds.width / width;
@@ -95,14 +95,14 @@ public class BoardRenderer : ScriptableObject, IGridZoneRenderer<LetterData>
                worldPos2D.y >= boundsMin.y && worldPos2D.y <= boundsMax.y;
     }
 
-    public void RenderGrid(IReadOnlyGrid<LetterData> grid, int width, int height)
+    public void RenderGrid(IReadOnlyGrid<LetterInstance> grid, int width, int height)
     {
         ClearBoard();
         for (int x = 0; x < width; x++)
         {
             for (int y = 0; y < height; y++)
             {
-                if (grid[x, y] == null || grid[x,y].name == null) continue;
+                if (grid[x, y] == null || grid[x,y].data.name == null) continue;
 
                 CreateBoardTile(grid[x, y], x, y, width, height);
             }

@@ -25,6 +25,14 @@ public abstract class GameZone<T> : IEnumerable<T>
     public abstract bool Contains(T item);
     public abstract IEnumerator<T> GetEnumerator();
 
+    // Swap methods - support both item-based and index-based swapping
+    public abstract bool Swap(T item1, T item2);
+    public abstract bool SwapByIndex(int index1, int index2);
+
+    // Helper methods for cross-zone operations
+    public abstract int GetIndexOf(T item);
+    public abstract T TryGetItemAt(int index);
+
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
     public virtual void SetRendererAsset(ScriptableObject asset)

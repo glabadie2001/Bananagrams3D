@@ -8,7 +8,7 @@ using UnityEngine;
 /// TODO: Consider separating BoardData from BoardRenderer for better SRP.
 /// </summary>
 [System.Serializable]
-public class Board : GridGameZone<LetterData>
+public class Board : GridGameZone<LetterInstance>
 {
     private GameRules rules;
 
@@ -27,7 +27,7 @@ public class Board : GridGameZone<LetterData>
         Renderer.RenderGrid(this, Width, Height);
     }
     
-    private Vector2Int WorldToGridPosition(Vector3 worldPos)
+    public Vector2Int WorldToIndex(Vector3 worldPos)
     {
         return GridSystem.WorldToGridPosition(worldPos, Renderer.GetBounds, Width, Height);
     }
@@ -37,20 +37,16 @@ public class Board : GridGameZone<LetterData>
         return GridSystem.IsValidGridPosition(gridPos, Width, Height);
     }
     
-    public Vector3 SnapToGrid(Vector3 worldPosition)
-    {
-
-        return GridSystem.SnapToGrid(worldPosition, Renderer.GetBounds, Width, Height);
-    }
+    
 
     public void RemoveTileAt(Vector3 worldPosition)
     {
-        Vector2Int gridPos = WorldToGridPosition(worldPosition);
-        
+        Vector2Int gridPos = WorldToIndex(worldPosition);
+
         if (IsValidGridPosition(gridPos))
         {
             Debug.Log($"Removed at {gridPos.x} {gridPos.y}");
-            this[gridPos.x, gridPos.y] = new LetterData(null, 0, null, false);
+            this[gridPos.x, gridPos.y] = null;
         }
     }
 
@@ -58,21 +54,22 @@ public class Board : GridGameZone<LetterData>
     /// Places tile and repaints the board.
     /// Use this when moving existing tile objects to new positions.
     /// </summary>
-    /// <param name="letter">Letter data to place</param>
+    /// <param name="letter">Letter instance to place</param>
     /// <param name="worldPosition">World position for placement</param>
     /// <returns>True if placement was successful</returns>
-    public bool PlaceTile(LetterData letter, Vector3 worldPosition)
+    public bool PlaceTile(LetterInstance letter, Vector3 worldPosition)
     {
-        Vector2Int gridPos = WorldToGridPosition(worldPosition);
-        
+        Vector2Int gridPos = WorldToIndex(worldPosition);
+
         if (!IsValidGridPosition(gridPos) || this[gridPos.x, gridPos.y] != null) return false;
 
-        this[gridPos.x, gridPos.y] = new LetterData(letter, this);
-        
+        this[gridPos.x, gridPos.y] = letter;
+        letter.SetOwner(this);
+
         return true;
     }
 
-    private void ProcessTileForWord(LetterData tile, List<LetterData> currWord, List<WordData> words)
+    private void ProcessTileForWord(LetterInstance tile, List<LetterInstance> currWord, List<WordData> words)
     {
         if (tile == null)
         {
@@ -89,8 +86,8 @@ public class Board : GridGameZone<LetterData>
     public List<WordData> ScanForWords()
     {
         List<WordData> words = new List<WordData>();
-        
-        List<LetterData> currWord = new List<LetterData>();
+
+        List<LetterInstance> currWord = new List<LetterInstance>();
         //Scan downs
         for (int x = 0; x < Width; x++)
         {
@@ -140,7 +137,7 @@ public class Board : GridGameZone<LetterData>
 
     public void Lock()
     {
-        foreach(LetterData l in contents)
+        foreach(LetterInstance l in contents)
         {
             if (l == null) continue;
             l.Lock();

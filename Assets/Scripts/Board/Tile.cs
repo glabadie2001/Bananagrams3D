@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 /// <summary>
@@ -5,22 +6,22 @@ using UnityEngine;
 /// Handles visual state, hover effects, and basic tile behavior.
 /// Location-specific logic is handled by managers, not the tile itself.
 /// </summary>
-public class Tile : MonoBehaviour
+public class Tile : MonoBehaviour, IDraggable
 {
     [Header("Tile Data")]
-    [SerializeField] private LetterData letterData;
-    
+    [SerializeField] private LetterInstance letterInstance;
+
     // Cached components for performance
     private Vector3 originalPosition;
     private bool isHovering = false;
     private Rigidbody rb;
     private Collider col;
     private MeshRenderer meshRenderer;
-    
+
     /// <summary>
-    /// The letter this tile represents
+    /// The letter instance this tile represents
     /// </summary>
-    public LetterData Letter => letterData;
+    public LetterInstance Letter => letterInstance;
     
     private void Awake()
     {
@@ -36,56 +37,75 @@ public class Tile : MonoBehaviour
     }
 
     /// <summary>
-    /// Initialize tile with letter data
+    /// Initialize tile with letter instance
     /// Call after instantiation to set up tile state.
     /// </summary>
-    public void Initialize(LetterData letter)
+    public void Initialize(LetterInstance letter)
     {
-        letterData = letter;
-            
+        letterInstance = letter;
+
         // Apply visual representation
-        if (meshRenderer && letter.baseMat != null)
-            meshRenderer.material = letter.baseMat;
+        if (meshRenderer && letter.data.baseMat != null)
+            meshRenderer.material = letter.data.baseMat;
     }
 
-    public void Move(GameZone<LetterData> target)
+    public void Move(GameZone<LetterInstance> target)
     {
-        letterData.owner.Remove(letterData);
-        target.Add(letterData);
-        letterData.owner = target;
+        letterInstance.owner.Remove(letterInstance);
+        target.Add(letterInstance);
+        letterInstance.owner = target;
     }
     
+    /*
     public void Swap(Tile target)
     {
         GameZone<LetterData> targetDst = target.letterData.owner;
-        target.Move(letterData.owner);
-        Move(targetDst);
-    }
+        target.Move(this.letterData.owner);
+        this.Move(targetDst);
+    }*/
 
     public void Remove()
     {
-        letterData.owner.Remove(letterData);
+        letterInstance.owner.Remove(letterInstance);
+    }
+    
+    public void SaveOriginalPosition()
+    {
+        originalPosition = transform.position;
+
     }
 
-    /// <summary>
-    /// Sets the tile's rest position and moves it there if not currently hovering.
-    /// Used when repositioning tiles in hand or placing on board.
-    /// </summary>
-    public void SetOriginalPosition(Vector3 position)
+    public void RestoreOriginalPosition()
     {
-        originalPosition = position;
-        if (!isHovering)
-            transform.position = position;
+        isHovering = false;
+        transform.position = originalPosition;
     }
 
-    /// <summary>
-    /// Enable/disable tile interaction and collision.
-    /// Used to prevent interaction during drag operations.
-    /// </summary>
-    public void SetEnabled(bool enabled)
+    public IEnumerator Drag(float dragSpeed)
     {
-        this.enabled = enabled;
-        if (col != null)
-            col.enabled = enabled;
+        Debug.Log("Dragging");
+        Camera cam = Camera.main;
+        Board board = GameManager.Inst.board;
+        GameConfig config = GameManager.Inst.configuration;
+        Vector3 target;
+        isHovering = true;
+        
+        while (isHovering)
+        {
+            Vector3 worldMouse = cam.ScreenToWorldPoint(InputManager.Inst.mousePos);
+
+            if (board.IsWithinBounds(worldMouse))
+            {
+                target = board.SnapToGrid(worldMouse);
+            }
+            else
+            {
+                target = worldMouse;
+                target.y = config.dragHeight;
+            }
+            
+            transform.position = Vector3.Lerp(transform.position, target, dragSpeed * Time.deltaTime);
+            yield return new WaitForEndOfFrame();
+        }
     }
 }

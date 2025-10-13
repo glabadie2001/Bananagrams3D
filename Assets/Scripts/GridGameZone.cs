@@ -1,6 +1,7 @@
 using System;
 using Sirenix.OdinInspector;
 using System.Collections.Generic;
+using Sirenix.Serialization;
 using UnityEngine;
 
 /// <summary>
@@ -16,8 +17,7 @@ public class GridGameZone<T> : GameZone<T>, IReadOnlyGrid<T>
     [SerializeField]
     private int height;
 
-
-    [NonSerialized]
+    [NonSerialized, OdinSerialize, ShowInInspector]
     protected T[] contents; // Flattened array for serialization
 
     public override int Count
@@ -59,6 +59,11 @@ public class GridGameZone<T> : GameZone<T>, IReadOnlyGrid<T>
         return false;
     }
 
+    public Vector3 SnapToGrid(Vector3 worldPosition)
+    {
+        return GridSystem.SnapToGrid(worldPosition, Renderer.GetBounds, Width, Height);
+    }
+    
     public int Width => width;
     public int Height => height;
 
@@ -162,6 +167,86 @@ public class GridGameZone<T> : GameZone<T>, IReadOnlyGrid<T>
             {
                 yield return item;
             }
+        }
+    }
+
+    public override bool Swap(T item1, T item2)
+    {
+        if (contents == null)
+        {
+            Debug.LogWarning("Cannot swap: GridGameZone contents are null");
+            return false;
+        }
+
+        int index1 = System.Array.IndexOf(contents, item1);
+        int index2 = System.Array.IndexOf(contents, item2);
+
+        if (index1 < 0 || index2 < 0)
+        {
+            Debug.LogWarning($"Cannot swap: One or both items not found in GridGameZone");
+            return false;
+        }
+
+        return SwapByIndex(index1, index2);
+    }
+
+    public override bool SwapByIndex(int index1, int index2)
+    {
+        if (contents == null)
+        {
+            Debug.LogWarning("Cannot swap: GridGameZone contents are null");
+            return false;
+        }
+
+        if (index1 < 0 || index1 >= contents.Length)
+        {
+            Debug.LogWarning($"Cannot swap: index1 ({index1}) out of range [0, {contents.Length})");
+            return false;
+        }
+
+        if (index2 < 0 || index2 >= contents.Length)
+        {
+            Debug.LogWarning($"Cannot swap: index2 ({index2}) out of range [0, {contents.Length})");
+            return false;
+        }
+
+        (contents[index1], contents[index2]) = (contents[index2], contents[index1]);
+        return true;
+    }
+
+    public override int GetIndexOf(T item)
+    {
+        if (contents == null)
+        {
+            Debug.Log("No contents");
+            return -1;
+        }
+        Debug.Log("Real check!");
+        return System.Array.IndexOf(contents, item);
+    }
+
+    public override T TryGetItemAt(int index)
+    {
+        if (contents == null || index < 0 || index >= contents.Length)
+            return default(T);
+        return contents[index];
+    }
+
+    /// <summary>
+    /// Swap two grid positions using row/column coordinates.
+    /// </summary>
+    public bool Swap(int row1, int col1, int row2, int col2)
+    {
+        try
+        {
+            int index1 = GetIndex(row1, col1);
+            int index2 = GetIndex(row2, col2);
+            return SwapByIndex(index1, index2);
+        }
+        catch (System.IndexOutOfRangeException e)
+        {
+            Debug.LogWarning($"Cannot swap: {e.Message}");
+            return false;
         }
     }
 

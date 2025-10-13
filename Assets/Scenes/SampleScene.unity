@@ -1014,6 +1014,7 @@ GameObject:
   - component: {fileID: 742388663}
   - component: {fileID: 742388668}
   - component: {fileID: 742388667}
+  - component: {fileID: 742388669}
   m_Layer: 0
   m_Name: GameController
   m_TagString: GameController
@@ -1044,7 +1045,6 @@ MonoBehaviour:
     rendererAsset: {fileID: 11400000, guid: bedaf3723ad597944b96371660d9f21e, type: 2}
     width: 20
     height: 20
-    contents: []
   dragSpeed: 10
   reserve:
     contents: []
@@ -1055,7 +1055,6 @@ MonoBehaviour:
     capacity: 21
     contents: []
   currentTile: {fileID: 0}
-  lastTilePos: {x: 0, y: 0, z: 0}
 --- !u!4 &742388664
 Transform:
   m_ObjectHideFlags: 0
@@ -1106,6 +1105,27 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   wordDisplay: {fileID: 1188559863}
+--- !u!114 &742388669
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 742388662}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6bec837c30d747aab16412671d343be9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EventManager
+  eventsPerTick: 10
+  eventQueue:
+    rid: 8723170344642543676
+  references:
+    version: 2
+    RefIds:
+    - rid: 8723170344642543676
+      type: {class: 'Queue`1[[GameEvent, Assembly-CSharp]]', ns: System.Collections.Generic, asm: mscorlib}
+      data: 
 --- !u!1 &832575517
 GameObject:
   m_ObjectHideFlags: 0

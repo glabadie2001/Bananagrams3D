@@ -48,6 +48,50 @@ public class LinearGameZone<T> : GameZone<T>
 
     public override IEnumerator<T> GetEnumerator() => contents.GetEnumerator();
 
+    public override bool Swap(T item1, T item2)
+    {
+        int index1 = contents.IndexOf(item1);
+        int index2 = contents.IndexOf(item2);
+
+        if (index1 < 0 || index2 < 0)
+        {
+            Debug.LogWarning($"Cannot swap: One or both items not found in LinearGameZone");
+            return false;
+        }
+
+        return SwapByIndex(index1, index2);
+    }
+
+    public override bool SwapByIndex(int index1, int index2)
+    {
+        if (index1 < 0 || index1 >= contents.Count)
+        {
+            Debug.LogWarning($"Cannot swap: index1 ({index1}) out of range [0, {contents.Count})");
+            return false;
+        }
+
+        if (index2 < 0 || index2 >= contents.Count)
+        {
+            Debug.LogWarning($"Cannot swap: index2 ({index2}) out of range [0, {contents.Count})");
+            return false;
+        }
+
+        (contents[index1], contents[index2]) = (contents[index2], contents[index1]);
+        return true;
+    }
+
+    public override int GetIndexOf(T item)
+    {
+        return contents.IndexOf(item);
+    }
+
+    public override T TryGetItemAt(int index)
+    {
+        if (index < 0 || index >= contents.Count)
+            return default(T);
+        return contents[index];
+    }
+
     protected override void RenderContents()
     {
         Renderer?.Render(contents);

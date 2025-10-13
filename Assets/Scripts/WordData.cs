@@ -3,10 +3,10 @@ using System.Linq;
 
 public struct WordData
 {
-    public LetterData[] chars;
+    public LetterInstance[] chars;
 
     // TODO: This might be the slowest shit ever, and probably unnecessary. Eat the overhead of a List if it becomes an issue
-    public WordData(IEnumerable<LetterData> _chars)
+    public WordData(IEnumerable<LetterInstance> _chars)
     {
         chars = _chars.ToArray();
     }
@@ -14,7 +14,7 @@ public struct WordData
     public float Score()
     {
         float total = 0;
-        foreach (LetterData c in chars)
+        foreach (LetterInstance c in chars)
             total += c.Score();
 
         return total;
@@ -23,9 +23,9 @@ public struct WordData
     public string Text()
     {
         string txt = "";
-        foreach (LetterData c in chars)
-            txt += c.name;
-        
+        foreach (LetterInstance c in chars)
+            txt += c.data.name;
+
         return txt;
     }
 }

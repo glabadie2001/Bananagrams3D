@@ -10,36 +10,36 @@ public static class TileFactory
     /// Creates a unified tile object with specified location and properties.
     /// Central method for all tile creation - prefer using specific methods below.
     /// </summary>
-    public static GameObject CreateTile(LetterData letter, GameObject prefab, Transform parent, Vector3 position)
+    public static GameObject CreateTile(LetterInstance letter, GameObject prefab, Transform parent, Vector3 position)
     {
         if (prefab == null)
         {
             Debug.LogError("Tile prefab not assigned!");
             return null;
         }
-        
+
         GameObject tileObj = Object.Instantiate(prefab, parent);
         tileObj.transform.position = position;
-        
+
         // Ensure unified Tile component exists
         Tile tile = tileObj.GetComponent<Tile>();
         if (tile == null)
             tile = tileObj.AddComponent<Tile>();
-        
+
         tile.Initialize(letter);
-        tile.SetOriginalPosition(position);
+        tile.SaveOriginalPosition();
         //tile.Letter.SetOwner(location);
-        
+
         ApplyLetterVisuals(tileObj, letter);
-        
+
         return tileObj;
     }
-    
-    private static void ApplyLetterVisuals(GameObject tileObj, LetterData letter)
+
+    private static void ApplyLetterVisuals(GameObject tileObj, LetterInstance letter)
     {
         var renderer = tileObj.GetComponent<MeshRenderer>();
-        if (renderer && letter.baseMat != null)
-            renderer.material = letter.baseMat;
+        if (renderer && letter.data.baseMat != null)
+            renderer.material = letter.data.baseMat;
     }
 
     public static void DestroyTile(GameObject tileObj)

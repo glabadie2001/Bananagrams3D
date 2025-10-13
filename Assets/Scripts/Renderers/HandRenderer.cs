@@ -3,7 +3,7 @@ using UnityEngine;
 using Sirenix.OdinInspector;
 
 [System.Serializable, CreateAssetMenu(menuName = "Bananagrams/Renderer/Hand Renderer")]
-public class HandRenderer : ScriptableObject, IZoneRenderer<LetterData>
+public class HandRenderer : ScriptableObject, IZoneRenderer<LetterInstance>
 {
     [Header("Hand Display Settings")]
     private Transform handContainer;
@@ -23,19 +23,19 @@ public class HandRenderer : ScriptableObject, IZoneRenderer<LetterData>
     }
 
     [Button("Refresh Hand Display")]
-    public void Render(IEnumerable<LetterData> letters)
+    public void Render(IEnumerable<LetterInstance> letters)
     {
         ClearHand();
-        
+
         int i = 0;
-        foreach(LetterData l in letters)
+        foreach(LetterInstance l in letters)
         {
             CreateHandTile(l, i);
             i++;
         }
     }
-    
-    private void CreateHandTile(LetterData letter, int index)
+
+    private void CreateHandTile(LetterInstance letter, int index)
     {
         Vector3 position = GridSystem.CalculateHandPosition(index, handBounds, tileSpacing, 1f, tilesPerRow);
         GameObject tileObj = TileFactory.CreateTile(letter, handTilePrefab, handContainer, position);

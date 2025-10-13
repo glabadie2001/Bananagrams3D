@@ -4,6 +4,7 @@ using UnityEngine;
 /// Centralized configuration for all game constants and settings.
 /// Create via Assets > Create > Game > Configuration
 /// </summary>
+/// TODO: My magic numbers are all over the place. Centralize.
 [CreateAssetMenu(fileName = "GameConfig", menuName = "Game/Config")]
 public class GameConfig : ScriptableObject
 {
