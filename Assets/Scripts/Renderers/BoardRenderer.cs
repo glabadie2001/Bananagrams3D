@@ -14,7 +14,7 @@ public class BoardRenderer : ScriptableObject, IGridZoneRenderer<LetterInstance>
     [Header("Bounds")]
     [SerializeField] private Rect boardBounds = new Rect(0, 0, 15f, 15f);
     [SerializeField] private bool showBoundsGizmo = true;
-    [SerializeField] private int zOffset;
+    [SerializeField] private float zOffset = 0.5f;
 
     public Rect GetBounds => boardBounds;
 

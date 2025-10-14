@@ -77,38 +77,33 @@ public class GameManager : MonoBehaviour
             if (currentTile == null) return;
 
             Vector3 worldMouse = mainCam.ScreenToWorldPoint(InputManager.Inst.mousePos);
-            
-            // Anywhere -> Board
-            if (board.IsWithinBounds(worldMouse))
-            {
-                Vector2Int tileIndex = board.WorldToIndex(worldMouse);
-                if (TryPlaceOnBoard(tileIndex)) return;
-            }
-            // Board -> Hand
-            else if (currentTile.Letter.owner == board && hand.IsWithinBounds(worldMouse))
-            {
-                // For hand, we can add to the end (hand doesn't have specific index positioning)
-                // Or we could calculate a hand index based on mouse position if needed
-                int handIndex = hand.Count; // Add to end for now
-
-                if (SwapBetweenZones(currentTile.Letter, board, hand, handIndex))
-                {
-                    // Swap successful, zones already refreshed
-                }
-                else
-                {
-                    // Swap failed, restore tile position
-                    currentTile.RestoreOriginalPosition();
-                }
-            }
-            // Fallback
-            else
-            {
-                currentTile.RestoreOriginalPosition();
-            }
-            
+            TryPlaceTile(worldMouse);
             currentTile = null;
         };
+    }
+
+    private bool TryPlaceTile(Vector3 worldMouse)
+    {
+        // Anywhere -> Board
+        if (board.IsWithinBounds(worldMouse))
+        {
+            Vector2Int tileIndex = board.WorldToIndex(worldMouse);
+            if (TryPlaceOnBoard(tileIndex)) return true;
+        }
+        // Board -> Hand
+        else if (hand.IsWithinBounds(worldMouse) && currentTile.Letter.owner == board)
+        {
+            // TODO: Could calculate a hand index based on mouse position if needed
+            int handIndex = hand.Count; // Add to end for now
+            if (SwapBetweenZones(currentTile.Letter, board, hand, handIndex)) return true;
+        }
+        // Fallback
+        else
+        {
+            currentTile.RestoreOriginalPosition();
+        }
+
+        return false;
     }
 
     private bool TryPlaceOnBoard(Vector2Int tileIndex)
@@ -117,22 +112,14 @@ public class GameManager : MonoBehaviour
 
         if (target is { locked: true })
         {
-            currentTile.RestoreOriginalPosition();
             return false;
         }
                 
         // Calculate target board index
         int targetIndex = board.GetIndex(tileIndex.x, tileIndex.y);
                 
-        // Use SwapBetweenZones to handle the move/swap
         // OnSwappedTo will be called automatically to update owner
-        if (!SwapBetweenZones(currentTile.Letter, currentTile.Letter.owner, board, targetIndex))
-        {
-            // Swap failed, restore tile position
-            currentTile.RestoreOriginalPosition();
-        }
-
-        return false;
+        return SwapBetweenZones(currentTile.Letter, currentTile.Letter.owner, board, targetIndex);
     }
 
     /// <summary>
@@ -200,8 +187,8 @@ public class GameManager : MonoBehaviour
     /// <param name="targetZone">The zone to move the item to</param>
     /// <param name="targetIndex">The target index in the target zone</param>
     /// <returns>True if the swap/move was successful</returns>
-    public static bool SwapBetweenZones<T>(T sourceItem, GameZone<T> sourceZone, GameZone<T> targetZone, int targetIndex)
-        where T : ISwappable<T>
+    /// TODO: Beautify
+    public static bool SwapBetweenZones<T>(T sourceItem, GameZone<T> sourceZone, GameZone<T> targetZone, int targetIndex) where T : ISwappable<T>
     {
         if (EqualityComparer<T>.Default.Equals(sourceItem, default(T)) || sourceZone == null || targetZone == null)
         {

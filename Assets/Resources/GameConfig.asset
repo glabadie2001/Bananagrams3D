@@ -17,8 +17,8 @@ MonoBehaviour:
   gridSize: 0.5
   boardYPosition: 0.1
   tileSize: 0.47
-  dragHeight: 1
-  hoverHeight: 0.5
+  dragHeight: 2.72
+  hoverHeight: 1.64
   handSize: 21
   tileSpacing: 1.2
   tilesPerRow: 7

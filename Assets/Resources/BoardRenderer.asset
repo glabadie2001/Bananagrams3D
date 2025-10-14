@@ -22,4 +22,4 @@ MonoBehaviour:
     width: 10
     height: 10
   showBoundsGizmo: 1
-  zOffset: 5
+  zOffset: 1

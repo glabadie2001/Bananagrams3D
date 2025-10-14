@@ -83,7 +83,6 @@ public class Tile : MonoBehaviour, IDraggable
 
     public IEnumerator Drag(float dragSpeed)
     {
-        Debug.Log("Dragging");
         Camera cam = Camera.main;
         Board board = GameManager.Inst.board;
         GameConfig config = GameManager.Inst.configuration;
@@ -101,8 +100,8 @@ public class Tile : MonoBehaviour, IDraggable
             else
             {
                 target = worldMouse;
-                target.y = config.dragHeight;
             }
+            target.y = config.dragHeight;
             
             transform.position = Vector3.Lerp(transform.position, target, dragSpeed * Time.deltaTime);
             yield return new WaitForEndOfFrame();
